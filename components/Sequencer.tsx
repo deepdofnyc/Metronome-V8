@@ -332,7 +332,6 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
                     subdivisions={displaySubdivisions}
                     pattern={displayPattern}
                     onPatternChange={handlePatternChange}
-                    // FIX: Use `isFlipped` prop instead of undefined `isAdvSequencerActive`
                     currentStep={isFlipped ? -1 : stepInMeasure}
                     isPlaying={isPlaying}
                     disabled={props.disabled}
@@ -345,7 +344,6 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
                     subdivisions={displaySubdivisions}
                     pattern={displayPattern}
                     onPatternChange={handlePatternChange}
-                    // FIX: Use `isFlipped` prop instead of undefined `isAdvSequencerActive`
                     currentStep={isFlipped ? -1 : stepInMeasure}
                     isPlaying={isPlaying}
                     disabled={props.disabled}

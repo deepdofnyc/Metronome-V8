@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react';
 import { type MetronomeSettings, type PlaylistItem, type Setlist, type Measure } from '../types';
 import { useMetronomeEngine, useSetlist, useQuickSongs } from '../hooks';
@@ -482,15 +481,28 @@ export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children 
         const song = quickSongs[slotIndex];
         if (!song) return;
         if (isPlaying) togglePlay();
-        const newSettings = migrateSettingsIfNeeded(song.settings);
-        const isAdvanced = newSettings.isAdvanced ?? false;
-        setIsAdvSequencerActive(isAdvanced);
-        setSettings(newSettings);
-        setLoadedQuickSongIndex(slotIndex);
-        setLoadedSongInfo(null);
-        setSelectedMeasureIndices([]);
-        setIsDirty(false);
-    }, [quickSongs, isPlaying, togglePlay]);
+
+        const quickSongSettings = migrateSettingsIfNeeded(song.settings);
+        const isAdvanced = quickSongSettings.isAdvanced ?? false;
+
+        if (loadedSongInfo) {
+            // A setlist song is loaded. Overwrite its settings with the quick song's settings
+            // and mark it as dirty, giving the user the option to save or cancel.
+            setSettings(quickSongSettings);
+            setIsAdvSequencerActive(isAdvanced);
+            setLoadedQuickSongIndex(null); // This is not a "quick song load" anymore, but an "edit"
+            setSelectedMeasureIndices([]);
+            setIsDirty(true);
+        } else {
+            // Original behavior: No setlist song is loaded, so just load the quick song directly.
+            setIsAdvSequencerActive(isAdvanced);
+            setSettings(quickSongSettings);
+            setLoadedQuickSongIndex(slotIndex);
+            setLoadedSongInfo(null);
+            setSelectedMeasureIndices([]);
+            setIsDirty(false);
+        }
+    }, [quickSongs, isPlaying, togglePlay, loadedSongInfo]);
 
     const handleSaveQuickSong = useCallback((slotIndex: number) => {
         const newQuickSongs = [...quickSongs];
@@ -517,37 +529,82 @@ export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     const handleRandomize = useCallback(() => {
         if (isPlaying) togglePlay();
+        
+        const currentBpm = settings.bpm;
+        let subChances: number[];
+        if (currentBpm > 180) { subChances = [1, 2]; } 
+        else if (currentBpm > 140) { subChances = [1, 2, 3, 4]; } 
+        else if (currentBpm > 100) { subChances = [1, 2, 3, 4, 6]; } 
+        else { subChances = [1, 2, 3, 4, 6, 8]; }
+        
         const beatChances = [2, 3, 4, 4, 4, 4, 4, 5, 6, 7];
-        const subChances = [1, 2, 3, 4, 4];
         const randomBeats = beatChances[Math.floor(Math.random() * beatChances.length)];
-        const randomSubdivisions = subChances[Math.floor(Math.random() * subChances.length)];
+        
+        let randomSubdivisions = subChances[Math.floor(Math.random() * subChances.length)];
+        if (randomBeats * randomSubdivisions > 64) {
+            randomSubdivisions = Math.floor(64 / randomBeats) || 1;
+        }
+
         const randomSwing = randomSubdivisions === 3 ? 0 : (Math.random() < 0.4 ? Math.random() * 0.6 + 0.1 : 0);
         const randomPattern = generateRandomPattern(randomBeats, randomSubdivisions);
+        
         const randomMeasure: Measure = {
             id: `m-random-${Date.now()}`,
             beats: randomBeats,
             subdivisions: randomSubdivisions,
             pattern: randomPattern,
         };
-        const newSettings: MetronomeSettings = {
-            bpm: Math.floor(Math.random() * (180 - 60 + 1)) + 60,
+        
+        // FIX: Explicitly type randomSoundSettings to ensure `simpleView` is not widened to `string`.
+        const randomSoundSettings: {
+            beatSoundId: string;
+            subdivisionSoundId: string;
+            accentVolume: number;
+            beatVolume: number;
+            swing: number;
+            simpleView: 'grid' | 'rings';
+        } = {
             beatSoundId: SOUND_OPTIONS[Math.floor(Math.random() * SOUND_OPTIONS.length)].id,
             subdivisionSoundId: SOUND_OPTIONS[Math.floor(Math.random() * SOUND_OPTIONS.length)].id,
             accentVolume: Math.random() * 0.5 + 0.5,
             beatVolume: Math.random() * 0.5 + 0.25,
-            masterVolume: settings.masterVolume,
             swing: randomSwing,
-            measureSequence: [randomMeasure],
-            countIn: false, loop: true, isAdvanced: false,
             simpleView: Math.random() < 0.5 ? 'grid' : 'rings',
         };
-        setSettings(newSettings);
-        setIsAdvSequencerActive(false);
-        setLoadedSongInfo(null);
-        setLoadedQuickSongIndex(null);
-        setSelectedMeasureIndices([]);
-        setIsDirty(false);
-    }, [isPlaying, togglePlay, settings.masterVolume]);
+
+        if (loadedSongInfo) {
+            // A setlist song is loaded. Modify its settings in place and mark as dirty.
+            setSettings(prev => ({
+                ...prev, // Keeps BPM, masterVolume, loop, etc. from the loaded song
+                ...randomSoundSettings,
+                measureSequence: [randomMeasure],
+                countIn: false,
+                isAdvanced: false,
+            }));
+            setIsAdvSequencerActive(false);
+            setLoadedQuickSongIndex(null);
+            setSelectedMeasureIndices([]);
+            setIsDirty(true);
+        } else {
+            // No setlist song is loaded (it's a new session or a quick song is active).
+            // Create a new configuration from scratch, preserving only BPM and master volume.
+            const newSettings: MetronomeSettings = {
+                bpm: settings.bpm,
+                masterVolume: settings.masterVolume,
+                ...randomSoundSettings,
+                measureSequence: [randomMeasure],
+                countIn: false,
+                loop: true,
+                isAdvanced: false,
+            };
+            setSettings(newSettings);
+            setIsAdvSequencerActive(false);
+            setLoadedSongInfo(null);
+            setLoadedQuickSongIndex(null);
+            setSelectedMeasureIndices([]);
+            setIsDirty(false);
+        }
+    }, [isPlaying, togglePlay, settings.bpm, settings.masterVolume, loadedSongInfo]);
 
     const handleRandomizeSelectedMeasures = useCallback(() => {
         if (isPlaying) togglePlay();
