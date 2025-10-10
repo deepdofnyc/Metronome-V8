@@ -15,7 +15,8 @@ import {
     EditIcon, 
     DuplicateIcon,
     CheckIcon,
-    GripIcon
+    GripIcon,
+    DiceIcon
 } from './Icons';
 
 interface SequencerProps {
@@ -44,6 +45,7 @@ interface SequencerProps {
   onLoopChange: (enabled: boolean) => void;
   isEditMode: boolean;
   onEditModeChange: (isEditing: boolean) => void;
+  onRandomizeSelectedMeasures: () => void;
 
   // General props
   isPlaying: boolean;
@@ -64,7 +66,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
     onDuplicateMeasure, globalCurrentStep, isPlaying, selectedMeasureIndices,
     onSetSelectedMeasureIndices, isFlipped, onFlip, countInEnabled,
     onCountInChange, loopEnabled, onLoopChange, isEditMode, onEditModeChange,
-    beatSoundId, subdivisionSoundId
+    beatSoundId, subdivisionSoundId, onRandomizeSelectedMeasures
   } = props;
   
   // Refs for managing props during flip transition to prevent visual glitches
@@ -95,6 +97,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [liveSequence, setLiveSequence] = useState<Measure[] | null>(null);
   const [newlyAddedMeasureId, setNewlyAddedMeasureId] = useState<string | null>(null);
+  const [isRandomizing, setIsRandomizing] = useState(false);
   const singleSelectedMeasureIndex = useMemo(() => selectedMeasureIndices.length === 1 ? selectedMeasureIndices[0] : null, [selectedMeasureIndices]);
   
   const sequenceForBackView = liveSequence || (isFlipped ? measureSequence : prevMeasureSequenceRef.current);
@@ -197,6 +200,13 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
     onDuplicateMeasure(singleSelectedMeasureIndex);
     onSetSelectedMeasureIndices([singleSelectedMeasureIndex + 1]);
   };
+
+  const handleRandomizeClick = () => {
+    if (isRandomizing || props.disabled) return;
+    setIsRandomizing(true);
+    onRandomizeSelectedMeasures();
+    setTimeout(() => setIsRandomizing(false), 500); // Animation duration
+  }
 
   // --- Drag & Drop Logic for reordering measures ---
   const handleDragStart = (e: React.DragEvent<HTMLButtonElement>, measureId: string) => {
@@ -407,10 +417,20 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
               </div>
 
               <div className={`mb-4 border-t border-white/10 transition-opacity ${isEditMode ? 'opacity-50' : ''}`}></div>
-
-              <div className={`grid grid-cols-2 gap-4 transition-opacity ${isEditMode ? 'opacity-50 pointer-events-none' : ''}`}>
-                  <button onClick={() => onCountInChange(!countInEnabled)} disabled={isEditMode} className={`w-full font-bold py-2.5 rounded-2xl transition-all duration-300 uppercase tracking-wider text-sm ${countInEnabled ? 'bg-gray-400 text-black' : 'bg-black/20 text-white/70'}`} aria-pressed={countInEnabled}>Count In</button>
-                  <button onClick={() => onLoopChange(!loopEnabled)} disabled={isEditMode} className={`w-full font-bold py-2.5 rounded-2xl transition-all duration-300 uppercase tracking-wider text-sm ${loopEnabled ? 'bg-gray-400 text-black' : 'bg-black/20 text-white/70'}`} aria-pressed={loopEnabled}>Loop</button>
+              
+              <div className={`flex items-center gap-2 transition-opacity ${isEditMode ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <button onClick={() => onCountInChange(!countInEnabled)} disabled={isEditMode} className={`flex-1 font-bold py-2.5 rounded-2xl transition-all duration-300 uppercase tracking-wider text-sm ${countInEnabled ? 'bg-gray-400 text-black' : 'bg-black/20 text-white/70'}`} aria-pressed={countInEnabled}>Count In</button>
+                  <button onClick={() => onLoopChange(!loopEnabled)} disabled={isEditMode} className={`flex-1 font-bold py-2.5 rounded-2xl transition-all duration-300 uppercase tracking-wider text-sm ${loopEnabled ? 'bg-gray-400 text-black' : 'bg-black/20 text-white/70'}`} aria-pressed={loopEnabled}>Loop</button>
+                  <button 
+                      onClick={handleRandomizeClick} 
+                      disabled={isEditMode || selectedMeasureIndices.length === 0}
+                      className="w-12 h-11 flex-shrink-0 flex items-center justify-center rounded-2xl bg-black/20 text-white/70 transition-colors hover:enabled:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label="Randomize selected measure(s)"
+                  >
+                      <div className={isRandomizing ? 'animate-spin-dice' : ''}>
+                          <DiceIcon className="h-6 w-6"/>
+                      </div>
+                  </button>
               </div>
               
               <div className={`my-4 border-t border-white/10 transition-opacity ${isEditMode ? 'opacity-50' : ''}`}></div>

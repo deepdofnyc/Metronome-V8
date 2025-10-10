@@ -628,6 +628,58 @@ const App: React.FC = () => {
 
   }, [isPlaying, togglePlay, settings.masterVolume]);
 
+  const handleRandomizeSelectedMeasures = useCallback(() => {
+    if (isPlaying) togglePlay();
+    if (selectedMeasureIndices.length === 0) return;
+
+    if (loadedSongInfo) setIsDirty(true);
+    if (loadedQuickSongIndex !== null) setLoadedQuickSongIndex(null);
+
+    setSettings(prev => {
+        const newSequence = [...prev.measureSequence];
+
+        selectedMeasureIndices.forEach(index => {
+            if (index < newSequence.length) {
+                // Do not randomize the count-in measure
+                if (prev.countIn && index === 0) {
+                    return;
+                }
+                
+                // Weighted randomness for more musical results
+                const beatChances = [2, 3, 4, 4, 4, 4, 4, 5, 6, 7, 8];
+                const subChances = [1, 2, 3, 4, 4, 6, 8].filter(s => s <= 16);
+
+                const randomBeats = beatChances[Math.floor(Math.random() * beatChances.length)];
+                let randomSubdivisions = subChances[Math.floor(Math.random() * subChances.length)];
+                
+                if (randomBeats * randomSubdivisions > 64) {
+                    randomSubdivisions = Math.floor(64 / randomBeats) || 1;
+                }
+
+                const randomSwing = randomSubdivisions === 3 ? 0 : (Math.random() < 0.4 ? Math.random() * 0.6 + 0.1 : 0);
+                const randomPattern = generateRandomPattern(randomBeats, randomSubdivisions);
+
+                const randomizedMeasure: Measure = {
+                    ...newSequence[index], // keep id
+                    beats: randomBeats,
+                    subdivisions: randomSubdivisions,
+                    pattern: randomPattern,
+                    swing: Math.random() < 0.5 ? randomSwing : undefined,
+                    bpm: Math.random() < 0.3 ? Math.floor(Math.random() * (180 - 60 + 1)) + 60 : undefined,
+                    beatSoundId: Math.random() < 0.3 ? SOUND_OPTIONS[Math.floor(Math.random() * SOUND_OPTIONS.length)].id : undefined,
+                    subdivisionSoundId: Math.random() < 0.3 ? SOUND_OPTIONS[Math.floor(Math.random() * SOUND_OPTIONS.length)].id : undefined,
+                    accentVolume: Math.random() < 0.3 ? Math.random() * 0.5 + 0.5 : undefined,
+                    beatVolume: Math.random() < 0.3 ? Math.random() * 0.5 + 0.25 : undefined,
+                };
+                newSequence[index] = randomizedMeasure;
+            }
+        });
+
+        return { ...prev, measureSequence: newSequence };
+    });
+
+  }, [isPlaying, togglePlay, selectedMeasureIndices, loadedSongInfo, loadedQuickSongIndex]);
+
   // --- SETLIST & SONG CRUD ---
   const setlistActions = useMemo(() => ({
     saveChanges: () => {
@@ -819,6 +871,7 @@ const App: React.FC = () => {
                     onCountInChange={handleCountInChange}
                     loopEnabled={settings.loop ?? true}
                     onLoopChange={(v) => updateSetting('loop', v)}
+                    onRandomizeSelectedMeasures={handleRandomizeSelectedMeasures}
 
                     // General props
                     isPlaying={isPlaying}
