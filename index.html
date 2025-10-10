@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Pulse Q</title>
+
+    <!-- PWA and iOS App-like Experience -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#111113">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Pulse Q">
+    <!-- NOTE: You will need to create and add these icon files to your project -->
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        --bg-color: #111113;
+        --primary-accent: #30ff8b;
+        --primary-accent-dark: #29b36d;
+        --primary-accent-rgb: 48, 255, 139;
+        --secondary-accent: #8855ff;
+        --strong-beat-accent: #ff9500;
+        --tertiary-accent: #00aaff;
+        --container-bg: rgba(44, 44, 50, 0.8);
+        --container-border: rgba(255, 255, 255, 0.2); /* Brighter border for glass effect */
+        --text-primary: #f1f1f1;
+        --text-secondary: #a0a0a0;
+        --text-tertiary: #6b6b6b;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+        overflow: hidden; /* Prevent scrollbars from the aurora effect */
+        /* Prevent text selection on the entire interface */
+        -webkit-user-select: none; /* Safari */
+        -moz-user-select: none;    /* Firefox */
+        -ms-user-select: none;     /* IE10+/Edge */
+        user-select: none;         /* Standard */
+      }
+      
+      /* Re-enable text selection for input fields */
+      input, textarea {
+        -webkit-user-select: text; /* Safari */
+        -moz-user-select: text;    /* Firefox */
+        -ms-user-select: text;     /* IE10+/Edge */
+        user-select: text;         /* Standard */
+      }
+      
+      body::before, body::after {
+        content: '';
+        position: fixed;
+        width: 60vmax;
+        height: 60vmax;
+        border-radius: 50%;
+        background: radial-gradient(circle, var(--primary-accent) 0%, rgba(255,255,255,0) 70%);
+        opacity: 0.25; /* Was 0.15, increased for solid background */
+        filter: blur(100px);
+        will-change: transform;
+        z-index: -1;
+      }
+      
+      body::before {
+        top: -20vh;
+        left: -20vw;
+        animation: aurora-move-1 25s infinite linear alternate;
+      }
+
+      body::after {
+        bottom: -20vh;
+        right: -20vw;
+        background: radial-gradient(circle, var(--secondary-accent) 0%, rgba(255,255,255,0) 70%);
+        animation: aurora-move-2 25s infinite linear alternate;
+      }
+
+      @keyframes aurora-move-1 {
+        from { transform: translate(0, 0) rotate(0deg); }
+        to { transform: translate(10vw, 20vh) rotate(90deg); }
+      }
+      @keyframes aurora-move-2 {
+        from { transform: translate(0, 0) rotate(0deg); }
+        to { transform: translate(-15vw, -10vh) rotate(-90deg); }
+      }
+
+      /* Custom scrollbar for drawers/modals */
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
+      /* Mixer Slider Styles */
+      .mixer-slider {
+        /* Common styles for div-based custom sliders */
+        width: 100%;
+        border-radius: 8px;
+        outline: none;
+        cursor: pointer;
+        
+        /* Default height for Knob sliders, RhythmSlider overrides this */
+        height: 30px;
+        
+        /* Default background for Knob sliders, RhythmSlider overrides this */
+        background: linear-gradient(to right, 
+            var(--slider-color, var(--primary-accent)) 0%, 
+            var(--slider-color, var(--primary-accent)) var(--fill-percentage, 0%), 
+            rgba(255, 255, 255, 0.15) var(--fill-percentage, 0%), 
+            rgba(255, 255, 255, 0.15) 100%
+        );
+      }
+
+      /* Add to Home Screen Prompt Styles */
+      .a2hs-prompt {
+        position: fixed;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+        left: 10px;
+        right: 10px;
+        background-color: var(--container-bg);
+        color: #e5e5e5;
+        padding: 1rem;
+        border-radius: 24px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        z-index: 1000;
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
+        border: 1px solid var(--container-border);
+        animation: a2hs-fade-in 0.5s ease-out;
+      }
+
+      .a2hs-text {
+        font-size: 0.95rem;
+        line-height: 1.5;
+        text-align: center;
+      }
+
+      .a2hs-close-btn {
+        position: absolute;
+        top: 4px;
+        right: 8px;
+        font-size: 24px;
+        color: #a1a1aa;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        line-height: 1;
+      }
+
+      @keyframes a2hs-fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+      }
+
+      @keyframes panel-fade-in {
+        from {
+          opacity: 0;
+          transform: translateY(-8px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .animate-panel {
+        animation: panel-fade-in 0.25s ease-out forwards;
+      }
+
+      @keyframes value-popup-in {
+        from {
+          opacity: 0;
+          transform: translateX(-50%) translateY(10px) scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0) scale(1);
+        }
+      }
+
+      .value-popup {
+        animation: value-popup-in 0.2s ease-out forwards;
+      }
+      
+      /* Sequencer Manual Press Effect */
+      .step-base-style {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        position: relative;
+        /* Define the SLOW release transition here. This is active when .step-is-pressed is removed. */
+        transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1), 
+                    box-shadow 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+      }
+
+      .step-is-pressed {
+        transform: scale(0.9);
+        box-shadow: inset 0px 6px 12px rgba(0, 0, 0, 0.7);
+        /* Define the FAST press transition here. This is active when .step-is-pressed is added. */
+        transition: transform 0.1s ease-in, box-shadow 0.1s ease-in;
+      }
+
+      /* Sequencer PLAYBACK Pulse Effect */
+      .step-playback-pulse::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        border-radius: 50%;
+        animation: playback-pulse-effect 0.8s ease-out forwards;
+        pointer-events: none;
+      }
+      
+      @keyframes playback-pulse-effect {
+        0% {
+          /* Deeper and more visible press */
+          transform: scale(0.85);
+          box-shadow: inset 0px 0px 15px 5px rgba(0, 0, 0, 0.8);
+          opacity: 1;
+        }
+        20% {
+          /* Hold the pressed state */
+          transform: scale(0.85);
+          box-shadow: inset 0px 0px 15px 5px rgba(0, 0, 0, 0.8);
+          opacity: 1;
+        }
+        100% {
+          /* Release back to original state */
+          transform: scale(1); 
+          box-shadow: inset 0px 0px 0px rgba(0, 0, 0, 0);
+          opacity: 0;
+        }
+      }
+
+      @keyframes number-pulse-effect {
+        0% {
+          color: white;
+          transform: scale(1.25);
+        }
+        20% {
+          color: white;
+          transform: scale(1.25);
+        }
+        100% {
+          color: rgba(0, 0, 0, 0.6);
+          transform: scale(1);
+        }
+      }
+
+      .number-playback-pulse {
+        animation: number-pulse-effect 0.8s ease-out forwards;
+      }
+
+      /* Animation for central number in Ring Sequencer */
+      @keyframes central-number-pulse-effect {
+          0% {
+              opacity: 1;
+              transform: scale(1.2);
+          }
+          100% {
+              opacity: 1;
+              transform: scale(1);
+          }
+      }
+
+      .central-number-playback-pulse {
+          animation: central-number-pulse-effect 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+      }
+
+      /* BPM Slider Fill */
+      .bpm-slider-fill {
+        background: linear-gradient(90deg, var(--secondary-accent) 0%, var(--primary-accent) 100%);
+      }
+
+      /* BPM Container Beat Effect */
+      .bpm-container-base {
+        box-shadow: inset 0 0 0 1px var(--container-border);
+      }
+
+      .bpm-container-pulse {
+        animation: bpm-border-pulse ease-out;
+      }
+
+      @keyframes bpm-border-pulse {
+        0% {
+          /* Appear instantly at full size, twice as wide */
+          box-shadow: inset 0 0 0 14px var(--primary-accent);
+        }
+        100% {
+          /* Fade back to the base state */
+          box-shadow: inset 0 0 0 1px var(--container-border);
+        }
+      }
+      
+      /* Sequencer Flip Animation */
+      .flip-container {
+        perspective: 1200px;
+      }
+
+      .flipper {
+        position: relative;
+        transition: transform 0.8s cubic-bezier(0.76, 0, 0.24, 1), height 0.6s cubic-bezier(0.76, 0, 0.24, 1);
+        transform-style: preserve-3d;
+        will-change: transform, height;
+      }
+
+      .flipper.is-flipped {
+        transform: rotate3d(0.1, 1, 0, 180deg);
+      }
+
+      .front, .back {
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden; /* Safari */
+        position: absolute; /* Both elements must be absolute for proper stacking */
+        top: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .back {
+        transform: rotate3d(0.1, 1, 0, 180deg);
+      }
+
+      /* Desktop Hover Lighten Effect */
+      @media (hover: hover) and (pointer: fine) {
+        .desktop-hover-effect::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-color: rgba(255, 255, 255, 0);
+          transition: background-color 0.2s ease-in-out;
+          pointer-events: none;
+        }
+        .desktop-hover-effect:hover::after {
+          background-color: rgba(255, 255, 255, 0.12);
+        }
+      }
+
+      /* Sequencer Drop Animation */
+      @keyframes drop-in-effect {
+        from {
+          transform: scale(0.9);
+          opacity: 0.5;
+        }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      .animate-drop-in {
+        animation: drop-in-effect 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      }
+
+      /* Quick Song Long-press Animation */
+      @keyframes radial-fill {
+        from {
+            stroke-dashoffset: 302; /* 2 * PI * 48 */
+        }
+        to {
+            stroke-dashoffset: 0;
+        }
+      }
+      .animate-radial-fill {
+          stroke-dasharray: 302;
+          stroke-dashoffset: 302;
+          animation: radial-fill linear forwards;
+          transform: rotate(-90deg);
+          transform-origin: center;
+      }
+      
+      /* Quick Song Progress Bar Animation */
+      @keyframes progress-bar-fill {
+        from { transform: translateX(-100%); }
+        to { transform: translateX(100%); }
+      }
+      .animate-progress-bar {
+        animation: progress-bar-fill 1s linear forwards;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
+    "react/": "https://esm.sh/react@^19.1.1/",
+    "react": "https://esm.sh/react@^19.1.1",
+    "@google/genai": "https://esm.sh/@google/genai"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="text-white antialiased">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

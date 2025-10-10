@@ -1,0 +1,22 @@
+{
+  "short_name": "Pulse Q",
+  "name": "Pulse Q",
+  "description": "A professional metronome for musicians with BPM control, customizable sounds, accent control, and preset saving capabilities.",
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#18181b",
+  "background_color": "#000000"
+}
