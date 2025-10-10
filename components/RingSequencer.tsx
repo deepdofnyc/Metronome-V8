@@ -1,4 +1,7 @@
+
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { playStepPreview } from '../services/audioPreviews';
 
 interface RingSequencerProps {
   beats: number;
@@ -9,9 +12,11 @@ interface RingSequencerProps {
   isPlaying: boolean;
   disabled?: boolean;
   bpm: number;
+  beatSoundId: string;
+  subdivisionSoundId: string;
 }
 
-const RingSequencer: React.FC<RingSequencerProps> = ({ beats, subdivisions, pattern, onPatternChange, currentStep, isPlaying, disabled = false, bpm }) => {
+const RingSequencer: React.FC<RingSequencerProps> = ({ beats, subdivisions, pattern, onPatternChange, currentStep, isPlaying, disabled = false, bpm, beatSoundId, subdivisionSoundId }) => {
     const [manuallyPressedSteps, setManuallyPressedSteps] = useState<Set<string>>(new Set());
     const [pulsingStep, setPulsingStep] = useState<number>(-1);
     const [rotation, setRotation] = useState(0);
@@ -79,6 +84,14 @@ const RingSequencer: React.FC<RingSequencerProps> = ({ beats, subdivisions, patt
         else newVal = 2; // off/sub -> beat
         
         newPattern[patternIndex] = newVal;
+        
+        // Play preview sound
+        if (newVal === 2) {
+            playStepPreview(beatSoundId, 2);
+        } else if (newVal === 3) {
+            playStepPreview(beatSoundId, 3);
+        }
+
         onPatternChange(newPattern);
     };
 
@@ -88,9 +101,43 @@ const RingSequencer: React.FC<RingSequencerProps> = ({ beats, subdivisions, patt
         const newPattern = [...pattern];
         if (stepIndex >= newPattern.length) return;
         
-        const currentVal = newPattern[stepIndex];
-        newPattern[stepIndex] = currentVal === 1 ? 0 : 1;
-        onPatternChange(newPattern);
+        // Check if this is the first subdivision of a beat (an on-beat step)
+        if (subdivisions > 0 && stepIndex % subdivisions === 0) {
+            // This is a main beat, so use the same logic as handleBeatClick
+            const currentVal = newPattern[stepIndex];
+
+            let newVal;
+            if (currentVal === 3) {
+                newVal = 0; // accent -> off
+            } else if (currentVal === 2) {
+                newVal = 3; // beat -> accent
+            } else { // Handles 0 and 1
+                newVal = 2; // off/sub -> beat
+            }
+            
+            newPattern[stepIndex] = newVal;
+            
+            // Play preview sound for the beat
+            if (newVal === 2) {
+                playStepPreview(beatSoundId, 2);
+            } else if (newVal === 3) {
+                playStepPreview(beatSoundId, 3);
+            }
+            
+            onPatternChange(newPattern);
+        } else {
+            // This is an off-beat subdivision, so just toggle between on and off
+            const currentVal = newPattern[stepIndex];
+            const newVal = currentVal === 1 ? 0 : 1;
+            newPattern[stepIndex] = newVal;
+            
+            // Play preview sound for the subdivision
+            if (newVal === 1) {
+                playStepPreview(subdivisionSoundId, 1);
+            }
+            
+            onPatternChange(newPattern);
+        }
     };
 
     const handlePressStart = (key: string) => {

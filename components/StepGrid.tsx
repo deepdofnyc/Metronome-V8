@@ -1,5 +1,7 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
+import { playStepPreview } from '../services/audioPreviews';
 
 interface StepGridProps {
   beats: number;
@@ -9,13 +11,15 @@ interface StepGridProps {
   currentStep: number;
   isPlaying: boolean;
   disabled?: boolean;
+  beatSoundId: string;
+  subdivisionSoundId: string;
 }
 
 /**
  * Displays an interactive grid of steps for a single measure,
  * allowing pattern creation and visualizing playback.
  */
-const StepGrid: React.FC<StepGridProps> = ({ beats, subdivisions, pattern, onPatternChange, currentStep, isPlaying, disabled = false }) => {
+const StepGrid: React.FC<StepGridProps> = ({ beats, subdivisions, pattern, onPatternChange, currentStep, isPlaying, disabled = false, beatSoundId, subdivisionSoundId }) => {
   const [manuallyPressedSteps, setManuallyPressedSteps] = useState<Set<number>>(new Set());
   const [pulsingSteps, setPulsingSteps] = useState<Set<number>>(new Set());
   const isMounted = useRef(true);
@@ -74,8 +78,19 @@ const StepGrid: React.FC<StepGridProps> = ({ beats, subdivisions, pattern, onPat
   const handleStepClick = (index: number) => {
     if(disabled) return;
     const newPattern = [...pattern];
-    // Cycle through 4 states: 0 (off), 1 (sub), 2 (beat), 3 (accent)
-    newPattern[index] = (newPattern[index] + 1) % 4;
+    const newState = (newPattern[index] + 1) % 4;
+    newPattern[index] = newState;
+    
+    // Play preview sound for the new state
+    if (newState === 1) { // Subdivision
+        playStepPreview(subdivisionSoundId, 1);
+    } else if (newState === 2) { // Beat
+        playStepPreview(beatSoundId, 2);
+    } else if (newState === 3) { // Accent
+        playStepPreview(beatSoundId, 3);
+    }
+    // No sound for state 0 (off)
+
     onPatternChange(newPattern);
   };
 

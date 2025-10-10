@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { type Measure } from '../types';
 import { generateDefaultPattern } from '../utils';
@@ -27,6 +28,8 @@ interface SequencerProps {
   bpm: number;
   simpleView: 'rings' | 'grid';
   onSimpleViewChange: (view: 'rings' | 'grid') => void;
+  beatSoundId: string;
+  subdivisionSoundId: string;
   
   // Advanced (back) view props
   measureSequence: Measure[];
@@ -60,7 +63,8 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
     simpleView, onSimpleViewChange, measureSequence, onMeasureSequenceChange, 
     onDuplicateMeasure, globalCurrentStep, isPlaying, selectedMeasureIndices,
     onSetSelectedMeasureIndices, isFlipped, onFlip, countInEnabled,
-    onCountInChange, loopEnabled, onLoopChange, isEditMode, onEditModeChange
+    onCountInChange, loopEnabled, onLoopChange, isEditMode, onEditModeChange,
+    beatSoundId, subdivisionSoundId
   } = props;
   
   // Refs for managing props during flip transition to prevent visual glitches
@@ -336,6 +340,8 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
                     currentStep={currentStep}
                     isPlaying={isPlaying}
                     disabled={props.disabled}
+                    beatSoundId={beatSoundId}
+                    subdivisionSoundId={subdivisionSoundId}
                 />
             ) : (
                 <RingSequencer
@@ -347,6 +353,8 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
                     isPlaying={isPlaying}
                     disabled={props.disabled}
                     bpm={bpm}
+                    beatSoundId={beatSoundId}
+                    subdivisionSoundId={subdivisionSoundId}
                 />
             )}
             <div className="mt-4 flex justify-between items-center pt-4 border-t border-white/10">
@@ -428,6 +436,8 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
                     currentStep={stepForGrid}
                     isPlaying={isPlaying}
                     disabled={props.disabled || singleSelectedMeasureIndex === null}
+                    beatSoundId={beatSoundId}
+                    subdivisionSoundId={subdivisionSoundId}
                   />
                 </div>
               )}

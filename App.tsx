@@ -805,6 +805,8 @@ const App: React.FC = () => {
                     bpm={settingsForDisplay.bpm}
                     simpleView={settings.simpleView ?? 'grid'}
                     onSimpleViewChange={(view) => updateSetting('simpleView', view)}
+                    beatSoundId={settingsForDisplay.beatSoundId}
+                    subdivisionSoundId={settingsForDisplay.subdivisionSoundId}
                     
                     // Props for the advanced (back) view
                     measureSequence={settings.measureSequence}

@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { type Sound } from '../types';
+import { playStepPreview } from '../services/audioPreviews';
 
 interface SoundSelectorProps {
   soundOptions: Sound[];
@@ -16,6 +18,19 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({
   onBeatSoundSelect,
   onSubdivisionSoundSelect,
 }) => {
+  
+  const handleBeatSoundSelect = (soundId: string) => {
+    // A 'beat' preview should be distinct, so we use the strong beat sound (type 3).
+    playStepPreview(soundId, 3);
+    onBeatSoundSelect(soundId);
+  };
+  
+  const handleSubdivisionSoundSelect = (soundId: string) => {
+    // A 'subdivision' preview uses the standard subdivision sound (type 1).
+    playStepPreview(soundId, 1);
+    onSubdivisionSoundSelect(soundId);
+  };
+
   return (
     <div className="w-full">
       <div className="flex justify-between items-start gap-4">
@@ -26,7 +41,7 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({
             {soundOptions.map(sound => (
               <button
                 key={sound.id}
-                onClick={() => onBeatSoundSelect(sound.id)}
+                onClick={() => handleBeatSoundSelect(sound.id)}
                 className={`w-full text-center font-semibold py-2 px-[15px] rounded-2xl transition-all duration-300 focus:outline-none 
                   ${currentBeatSoundId === sound.id 
                       ? 'bg-[var(--primary-accent)] text-black shadow-md' 
@@ -47,7 +62,7 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({
             {soundOptions.map(sound => (
               <button
                 key={sound.id}
-                onClick={() => onSubdivisionSoundSelect(sound.id)}
+                onClick={() => handleSubdivisionSoundSelect(sound.id)}
                 className={`w-full text-center font-semibold py-2 px-[15px] rounded-2xl transition-all duration-300 focus:outline-none 
                   ${currentSubdivisionSoundId === sound.id 
                       ? 'bg-[var(--secondary-accent)] text-black shadow-md'
