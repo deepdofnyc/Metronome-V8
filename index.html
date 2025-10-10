@@ -386,6 +386,19 @@
       .animate-progress-bar {
         animation: progress-bar-fill 1s linear forwards;
       }
+
+      /* Dice Spin Animation */
+      @keyframes spin-dice-effect {
+        from {
+          transform: rotate(0deg) scale(1);
+        }
+        to {
+          transform: rotate(360deg) scale(1);
+        }
+      }
+      .animate-spin-dice {
+        animation: spin-dice-effect 500ms ease-out;
+      }
     </style>
   <script type="importmap">
 {

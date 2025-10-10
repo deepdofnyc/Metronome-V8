@@ -10,6 +10,42 @@ export const generateDefaultPattern = (beats: number, subdivisions: number): num
   });
 };
 
+export const generateRandomPattern = (beats: number, subdivisions: number): number[] => {
+  const totalSteps = beats * subdivisions;
+  if (totalSteps <= 0) return [];
+  
+  // Start with a standard pattern where beats are on
+  const pattern = generateDefaultPattern(beats, subdivisions);
+
+  // Randomly introduce rests and accents to create variation
+  for (let i = 0; i < totalSteps; i++) {
+    const isFirstBeat = i === 0;
+    const isMainBeat = i % subdivisions === 0;
+
+    // The very first beat of the measure should always be a strong beat.
+    if (isFirstBeat) continue;
+
+    if (isMainBeat) {
+      // It's a main beat (but not the first one)
+      const rand = Math.random();
+      if (rand < 0.15) { // 15% chance of being a rest
+        pattern[i] = 0;
+      } else if (rand < 0.25) { // 10% chance of being an accent
+        pattern[i] = 3;
+      }
+      // Otherwise, it remains a normal beat (2)
+    } else {
+      // It's a subdivision
+      const rand = Math.random();
+      if (rand < 0.5) { // 50% chance of being a rest
+        pattern[i] = 0;
+      }
+      // Otherwise, it remains a subdivision (1)
+    }
+  }
+  return pattern;
+};
+
 export const createDemoSetlist = (): Setlist[] => {
     const now = Date.now();
 

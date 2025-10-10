@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AudioEngine } from './services/audioEngine';
 import { type MetronomeSettings, type PlaylistItem, type Setlist } from './types';
@@ -71,7 +72,7 @@ export const useMetronomeEngine = (settings: MetronomeSettings, audioEngineRef: 
 
 /**
  * @hook useQuickSongs
- * @description Manages the state for the four "quick song" slots.
+ * @description Manages the state for the three "quick song" slots.
  * Handles loading from and saving to localStorage.
  * @returns {{quickSongs: (PlaylistItem | null)[], saveQuickSongs: (newQuickSongs: (PlaylistItem | null)[]) => void}}
  */
@@ -82,9 +83,9 @@ export const useQuickSongs = () => {
             try {
                 const parsed = JSON.parse(storedData);
                 if (Array.isArray(parsed)) {
-                    // Ensure it's an array of 4, padding with null if needed
-                    const validated = new Array(4).fill(null);
-                    for (let i = 0; i < 4; i++) {
+                    // Ensure it's an array of 3, padding with null if needed
+                    const validated = new Array(3).fill(null);
+                    for (let i = 0; i < 3; i++) {
                         if (parsed[i]) {
                             validated[i] = { ...parsed[i], settings: migrateSettingsIfNeeded(parsed[i].settings) };
                         }
@@ -95,7 +96,7 @@ export const useQuickSongs = () => {
                 console.error("Failed to parse quick songs from localStorage.", e);
             }
         }
-        return new Array(4).fill(null);
+        return new Array(3).fill(null);
     });
 
     const saveQuickSongs = (newQuickSongs: (PlaylistItem | null)[]) => {

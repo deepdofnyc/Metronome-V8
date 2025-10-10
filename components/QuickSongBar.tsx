@@ -1,11 +1,12 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { type PlaylistItem, type MetronomeSettings } from '../types';
-import { PlusIcon } from './Icons';
+import { PlusIcon, DiceIcon } from './Icons';
 
 interface QuickSongBarProps {
   quickSongs: (PlaylistItem | null)[];
   onLoadSong: (slotIndex: number) => void;
   onSaveSong: (slotIndex: number) => void;
+  onRandomize: () => void;
   loadedQuickSongIndex: number | null;
   disabled?: boolean;
   onPressingChange: (isPressing: boolean, slotIndex: number) => void;
@@ -167,14 +168,59 @@ const QuickSongSlot: React.FC<{
     );
 };
 
+const RandomizerSlot: React.FC<{ onRandomize: () => void; disabled?: boolean; }> = ({ onRandomize, disabled }) => {
+    const [isPressing, setIsPressing] = useState(false);
+    const [isSpinning, setIsSpinning] = useState(false);
 
-const QuickSongBar: React.FC<QuickSongBarProps> = ({ quickSongs, onLoadSong, onSaveSong, loadedQuickSongIndex, disabled, onPressingChange }) => {
-  const allSlotsEmpty = quickSongs.every(song => song === null);
+    const handlePressStart = () => {
+        if (disabled) return;
+        setIsPressing(true);
+    };
+
+    const handlePressEnd = () => {
+        if (disabled) return;
+        setIsPressing(false);
+        if (!isSpinning) {
+            setIsSpinning(true);
+            onRandomize(); // Trigger on release
+            setTimeout(() => setIsSpinning(false), 500); // Animation duration
+        }
+    };
+
+    const handleCancel = () => {
+        setIsPressing(false);
+    };
+
+    const baseClasses = "w-16 h-16 rounded-full flex-shrink-0 flex flex-col items-center justify-center transition-all duration-200 relative select-none";
+    const pressClasses = isPressing ? 'scale-90' : 'scale-100';
+    const spinClass = isSpinning ? 'animate-spin-dice' : '';
+
+    return (
+        <button
+            onMouseDown={handlePressStart}
+            onMouseUp={handlePressEnd}
+            onMouseLeave={handleCancel}
+            onTouchStart={handlePressStart}
+            onTouchEnd={handlePressEnd}
+            onTouchCancel={handleCancel}
+            disabled={disabled}
+            className={`${baseClasses} ${pressClasses} bg-transparent hover:bg-black/20`}
+            aria-label="Generate Random Groove"
+        >
+            <div className={spinClass}>
+                <DiceIcon />
+            </div>
+        </button>
+    );
+};
+
+const QuickSongBar: React.FC<QuickSongBarProps> = ({ quickSongs, onLoadSong, onSaveSong, onRandomize, loadedQuickSongIndex, disabled, onPressingChange }) => {
+  const firstThreeSlotsEmpty = quickSongs.slice(0, 3).every(song => song === null);
 
   return (
     <div className={`w-full flex flex-col items-center gap-2 transition-opacity duration-300 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
       <div className="w-full flex items-start justify-center gap-4">
-        {Array.from({ length: 4 }).map((_, index) => (
+        {Array.from({ length: 3 }).map((_, index) => (
           <QuickSongSlot
             key={index}
             slotIndex={index}
@@ -186,10 +232,11 @@ const QuickSongBar: React.FC<QuickSongBarProps> = ({ quickSongs, onLoadSong, onS
             onPressingChange={(isPressing) => onPressingChange(isPressing, index)}
           />
         ))}
+        <RandomizerSlot onRandomize={onRandomize} disabled={disabled} />
       </div>
-      {allSlotsEmpty && (
+      {firstThreeSlotsEmpty && (
         <p className="text-xs text-center text-[var(--text-secondary)]">
-          Long-press a slot to save.
+          Long-press a slot to save. Tap the dice to randomize.
         </p>
       )}
     </div>

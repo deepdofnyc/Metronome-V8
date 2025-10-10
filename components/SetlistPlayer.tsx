@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { type PlaylistItem } from '../types';
 import { PlayerPauseIcon, PlayerPlayIcon, SongNextIcon, SongPrevIcon } from './Icons';
@@ -35,7 +34,7 @@ const SetlistPlayer: React.FC<SetlistPlayerProps> = ({
         };
     }, [currentSongId, songs]);
 
-    const canPlay = currentSongId !== null;
+    const canPlay = currentSongId !== null || songs.length > 0;
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--container-bg)] backdrop-blur-lg border-t border-[var(--container-border)] animate-panel" style={{ animationName: 'a2hs-fade-in' }}>

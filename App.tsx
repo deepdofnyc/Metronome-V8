@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { type MetronomeSettings, type PlaylistItem, type Setlist, type Measure } from './types';
 import { SOUND_OPTIONS } from './constants';
 import { useMetronomeEngine, useSetlist, useQuickSongs, useAppSettings } from './hooks';
-import { generateDefaultPattern, migrateSettingsIfNeeded, createDemoSetlist } from './utils';
+import { generateDefaultPattern, migrateSettingsIfNeeded, createDemoSetlist, generateRandomPattern } from './utils';
 import Knob from './components/Knob';
 import SetlistManager from './components/SetlistManager';
 import BpmControl from './components/HorizontalBpmSlider';
@@ -582,6 +582,52 @@ const App: React.FC = () => {
       });
   }, []);
 
+  const handleRandomize = useCallback(() => {
+    if (isPlaying) togglePlay();
+
+    // Weighted randomness for more musical results
+    const beatChances = [2, 3, 4, 4, 4, 4, 4, 5, 6, 7];
+    const subChances = [1, 2, 3, 4, 4];
+
+    const randomBeats = beatChances[Math.floor(Math.random() * beatChances.length)];
+    const randomSubdivisions = subChances[Math.floor(Math.random() * subChances.length)];
+    
+    // Triplets (3 subdivisions) typically don't have swing
+    const randomSwing = randomSubdivisions === 3 ? 0 : (Math.random() < 0.4 ? Math.random() * 0.6 + 0.1 : 0);
+    const randomPattern = generateRandomPattern(randomBeats, randomSubdivisions);
+
+    const randomMeasure: Measure = {
+        id: `m-random-${Date.now()}`,
+        beats: randomBeats,
+        subdivisions: randomSubdivisions,
+        pattern: randomPattern,
+    };
+
+    const newSettings: MetronomeSettings = {
+        bpm: Math.floor(Math.random() * (180 - 60 + 1)) + 60,
+        beatSoundId: SOUND_OPTIONS[Math.floor(Math.random() * SOUND_OPTIONS.length)].id,
+        subdivisionSoundId: SOUND_OPTIONS[Math.floor(Math.random() * SOUND_OPTIONS.length)].id,
+        accentVolume: Math.random() * 0.5 + 0.5, // Range: 0.5 to 1.0
+        beatVolume: Math.random() * 0.5 + 0.25, // Range: 0.25 to 0.75
+        masterVolume: settings.masterVolume, // Keep user's master volume
+        swing: randomSwing,
+        measureSequence: [randomMeasure],
+        countIn: false,
+        loop: true,
+        isAdvanced: false,
+        simpleView: Math.random() < 0.5 ? 'grid' : 'rings',
+    };
+    
+    setSettings(newSettings);
+    setIsAdvSequencerActive(false);
+    setLoadedSongInfo(null);
+    setLoadedQuickSongIndex(null);
+    setSelectedMeasureIndices([]);
+    setIsDirty(false); // This is a new "session", not a modified song
+    setActivePanel(null);
+
+  }, [isPlaying, togglePlay, settings.masterVolume]);
+
   // --- SETLIST & SONG CRUD ---
   const setlistActions = useMemo(() => ({
     saveChanges: () => {
@@ -606,21 +652,15 @@ const App: React.FC = () => {
         if (!targetSetlist) return;
 
         const newId = `song-${new Date().toISOString()}`;
-        const newMeasures: Measure[] = [
-            { id: `m-${Date.now()}-cin`, beats: 4, subdivisions: 1, pattern: generateDefaultPattern(4, 1) },
-            { id: `m-${Date.now()}-m1`, beats: 4, subdivisions: 4, pattern: generateDefaultPattern(4, 4) },
-            { id: `m-${Date.now()}-m2`, beats: 4, subdivisions: 4, pattern: generateDefaultPattern(4, 4) },
-            { id: `m-${Date.now()}-m3`, beats: 4, subdivisions: 4, pattern: generateDefaultPattern(4, 4) },
-        ];
+        
+        // Use a deep copy of the CURRENT settings for the new song.
+        const newSongSettings: MetronomeSettings = JSON.parse(JSON.stringify(settings));
 
-        const newSongSettings: MetronomeSettings = {
-            bpm: 120, beatSoundId: 'classic', subdivisionSoundId: 'classic',
-            accentVolume: 0.75, beatVolume: 0.5, masterVolume: settings.masterVolume,
-            swing: 0, measureSequence: newMeasures, countIn: true, loop: true,
-            isAdvanced: true, simpleView: 'grid',
+        const newSong: PlaylistItem = { 
+            id: newId, 
+            name: `New Song ${targetSetlist.songs.length + 1}`, 
+            settings: newSongSettings 
         };
-
-        const newSong: PlaylistItem = { id: newId, name: `New Song ${targetSetlist.songs.length + 1}`, settings: newSongSettings };
         
         setSetlists(prev => {
             const newSetlists = prev.map(sl => sl.id === setlistId ? { ...sl, songs: [...sl.songs, newSong] } : sl);
@@ -628,12 +668,14 @@ const App: React.FC = () => {
             return newSetlists;
         });
 
+        // Load the newly created song. Since it's based on current settings,
+        // this will feel seamless to the user.
         setSettings(newSongSettings);
-        setIsAdvSequencerActive(true);
+        setIsAdvSequencerActive(newSongSettings.isAdvanced ?? false);
         setLoadedSongInfo({ setlistId, songId: newId });
         setLoadedQuickSongIndex(null);
         setSelectedMeasureIndices([]);
-        setIsDirty(false); 
+        setIsDirty(false); // It's a newly saved song, so it's not "dirty".
     },
     updateSetlistName: (id, name) => { setSetlists(p => { const n = p.map(s=>s.id===id?{...s,name}:s); saveSetlists(n); return n; }); },
     updateSongName: (sId, sgId, name) => { setSetlists(p => { const n = p.map(sl=>sl.id===sId?{...sl,songs:sl.songs.map(s=>s.id===sgId?{...s,name}:s)}:sl); saveSetlists(n); return n; }); },
@@ -742,6 +784,7 @@ const App: React.FC = () => {
                     onLoadSong={handleLoadSong} 
                     onLoadAndPlaySong={handleLoadAndPlay}
                     onStop={handleStop}
+                    isPlaying={isPlaying}
                     onRenameTriggered={onRenameTriggered} 
                     isContainerOpen={isSongsContainerOpen} 
                     onToggleVisibility={handleToggleSongsContainer} 
@@ -801,6 +844,7 @@ const App: React.FC = () => {
                         quickSongs={quickSongs}
                         onLoadSong={handleLoadQuickSong}
                         onSaveSong={handleSaveQuickSong}
+                        onRandomize={handleRandomize}
                         loadedQuickSongIndex={loadedQuickSongIndex}
                         disabled={isEditingSequence}
                         onPressingChange={handleQuickSongPressingChange}
@@ -835,7 +879,23 @@ const App: React.FC = () => {
           
           {isEditingSequence && <div className="fixed inset-0 bg-black/50 z-5" />}
 
-          {activeSetlistId && appSettings.showSetlists && <SetlistPlayer songs={activeSetlist?.songs ?? []} currentSongId={loadedSongId} isPlaying={isPlaying && currentlyPlayingId === loadedSongId} setlistName={activeSetlist?.name ?? ''} onPrevSong={handlePrevSong} onNextSong={handleNextSong} canGoPrevSong={canGoPrevSong} canGoNextSong={canGoNextSong} onPlayPause={() => { if (loadedSongId && activeSetlist) { const songToPlay = activeSetlist.songs.find(s => s.id === loadedSongId); if (!songToPlay) return; if(currentlyPlayingId !== loadedSongId){ handleLoadAndPlay(songToPlay, activeSetlist.id); } else { togglePlay(); } } }} isUiDisabled={isEditingSequence} />}
+          {activeSetlistId && appSettings.showSetlists && <SetlistPlayer songs={activeSetlist?.songs ?? []} currentSongId={loadedSongId} isPlaying={isPlaying && currentlyPlayingId === loadedSongId} setlistName={activeSetlist?.name ?? ''} onPrevSong={handlePrevSong} onNextSong={handleNextSong} canGoPrevSong={canGoPrevSong} canGoNextSong={canGoNextSong} onPlayPause={() => {
+              if (isEditingSequence) return;
+              // If a song is loaded, play/pause it
+              if (loadedSongId && activeSetlist) {
+                  const songToPlay = activeSetlist.songs.find(s => s.id === loadedSongId);
+                  if (!songToPlay) return;
+                  if (currentlyPlayingId !== loadedSongId) {
+                      handleLoadAndPlay(songToPlay, activeSetlist.id);
+                  } else {
+                      togglePlay();
+                  }
+              }
+              // If no song is loaded, play the first one in the setlist
+              else if (!loadedSongId && activeSetlist && activeSetlist.songs.length > 0) {
+                  handleLoadAndPlay(activeSetlist.songs[0], activeSetlist.id);
+              }
+          }} isUiDisabled={isEditingSequence} />}
         </>
       )}
 

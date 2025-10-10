@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { type PlaylistItem, type Setlist, type MetronomeSettings } from '../types';
 import { 
@@ -41,6 +42,7 @@ interface SetlistManagerProps {
   onLoadSong: (song: PlaylistItem, setlistId: string, preventStop?: boolean) => void;
   onLoadAndPlaySong: (song: PlaylistItem, setlistId: string) => void;
   onStop: () => void;
+  isPlaying: boolean;
   onRenameTriggered: () => void;
   isContainerOpen: boolean;
   onToggleVisibility: () => void;
@@ -223,16 +225,8 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
   
   const handleSetlistClick = (setlist: Setlist) => {
     if (isEditMode || editingItemId === setlist.id) return;
-    
-    if (props.playingSetlistId === setlist.id && props.currentlyPlayingId) {
-        const playingSong = setlist.songs.find(s => s.id === props.currentlyPlayingId)
-        if (playingSong) {
-            props.onLoadSong(playingSong, setlist.id, true)
-        }
-    } else {
-        if (setlist.songs.length > 0) {
-            props.onLoadSong(setlist.songs[0], setlist.id);
-        }
+    if (props.isPlaying) {
+        props.onStop();
     }
     setActiveSetlistId(setlist.id);
   };

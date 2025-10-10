@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 
 export const MixerIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 10V3M5 21V14M12 7V3M12 21V11M19 12V3M19 21V16M2 10H8M9 7H15M16 12H22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
@@ -35,3 +36,14 @@ export const SequenceRingIcon = () => <svg xmlns="http://www.w3.org/2000/svg" cl
 export const SequenceGridIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white/70" viewBox="0 0 20 20" fill="currentColor"><circle cx="7" cy="7" r="2" /><circle cx="13" cy="7" r="2" /><circle cx="7" cy="13" r="2" /><circle cx="13" cy="13" r="2" /></svg>;
 
 export const CloseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
+
+export const DiceIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 24 24">
+        <rect width="18" height="18" x="3" y="3" rx="3.5" ry="3.5" fill="white"/>
+        <circle cx="8" cy="8" r="1.5" fill="black" />
+        <circle cx="16" cy="16" r="1.5" fill="black" />
+        <circle cx="12" cy="12" r="1.5" fill="black" />
+        <circle cx="8" cy="16" r="1.5" fill="black" />
+        <circle cx="16" cy="8" r="1.5" fill="black" />
+    </svg>
+);
