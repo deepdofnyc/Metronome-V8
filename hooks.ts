@@ -51,7 +51,7 @@ export const useMetronomeEngine = (settings: MetronomeSettings, audioEngineRef: 
     }
   }, [isPlaying]);
 
-  const togglePlay = useCallback(async () => {
+  const togglePlay = useCallback(async (startMeasureIndex?: number) => {
     const engine = audioEngineRef.current;
     if (!engine) return;
     
@@ -62,7 +62,7 @@ export const useMetronomeEngine = (settings: MetronomeSettings, audioEngineRef: 
       engine.stop();
       setIsPlaying(false);
     } else {
-      engine.start();
+      engine.start(startMeasureIndex);
       setIsPlaying(true);
     }
   }, [audioEngineRef]);

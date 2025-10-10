@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react';
 import { type MetronomeSettings, type PlaylistItem, type Setlist, type Measure } from '../types';
 import { useMetronomeEngine, useSetlist, useQuickSongs } from '../hooks';
@@ -177,8 +178,9 @@ export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children 
     const simpleViewMeasure = useMemo(() => settings.measureSequence[0] ?? { id: 'fallback', beats: 4, subdivisions: 2, pattern: generateDefaultPattern(4,2) }, [settings.measureSequence]);
     
     const togglePlay = useCallback(() => {
-        engineTogglePlay();
-    }, [engineTogglePlay]);
+        const startMeasure = (isAdvSequencerActive && singleEditingMeasureIndex !== null) ? singleEditingMeasureIndex : 0;
+        engineTogglePlay(startMeasure);
+    }, [engineTogglePlay, isAdvSequencerActive, singleEditingMeasureIndex]);
 
     const handleLoadSong = useCallback((song: PlaylistItem, setlistId: string, preventStop = false) => {
         if (isPlaying && !preventStop) togglePlay();
@@ -342,13 +344,16 @@ export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children 
 
         if (!wasPlaying || isSwitching) {
             setTimeout(() => {
-                engineTogglePlay();
+                const startMeasure = (isAdvSequencerActive && singleEditingMeasureIndex !== null) ? singleEditingMeasureIndex : 0;
+                // When switching to a new song, always start from the beginning.
+                // When resuming a paused song, start from the selected measure.
+                engineTogglePlay(isSwitching ? 0 : startMeasure);
                 isSwitchingSong.current = false;
             }, 50);
         } else {
             isSwitchingSong.current = false;
         }
-    }, [isPlaying, engineTogglePlay, loadedSongInfo, handleLoadSong]);
+    }, [isPlaying, engineTogglePlay, loadedSongInfo, handleLoadSong, isAdvSequencerActive, singleEditingMeasureIndex]);
 
     const handleStop = useCallback(() => {
         if (isPlaying) togglePlay();

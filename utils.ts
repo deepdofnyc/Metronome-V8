@@ -91,6 +91,49 @@ export const createDemoSetlist = (): Setlist[] => {
         }
     };
     
+    const everybodyWantsToRuleTheWorldSong: PlaylistItem = {
+        id: `song-${now}-5`,
+        name: "Everybody Wants to Rule the World",
+        settings: {
+            bpm: 112,
+            beatSoundId: 'electronic',
+            subdivisionSoundId: 'electronic',
+            accentVolume: 0.8,
+            beatVolume: 0.6,
+            masterVolume: 0.7,
+            swing: 0.6, // The key shuffle feel
+            measureSequence: [{ id: `m-${now}-s5-m1`, beats: 4, subdivisions: 2, pattern: generateDefaultPattern(4, 2) }],
+            countIn: false,
+            loop: true,
+            isAdvanced: false,
+            simpleView: 'grid',
+        }
+    };
+
+    const comeTogetherSong: PlaylistItem = {
+        id: `song-${now}-6`,
+        name: "Come Together",
+        settings: {
+            bpm: 85,
+            beatSoundId: 'classic',
+            subdivisionSoundId: 'classic',
+            accentVolume: 0.8,
+            beatVolume: 0.6,
+            masterVolume: 0.7,
+            swing: 0.65, // Heavy 16th note swing
+            measureSequence: [{ id: `m-${now}-s6-m1`, beats: 4, subdivisions: 4, pattern: [
+                3, 0, 0, 1, // Beat 1: Kick, rest, rest, Tom
+                2, 0, 1, 0, // Beat 2: Kick, rest, Tom, rest
+                2, 0, 0, 1, // Beat 3: Kick, rest, rest, Tom
+                2, 0, 1, 1  // Beat 4: Kick, rest, Tom, Hat
+            ] }],
+            countIn: false,
+            loop: true,
+            isAdvanced: false, // It's a single-measure pattern
+            simpleView: 'grid',
+        }
+    };
+
     const verseChorusMeasures: Measure[] = [
         { id: `m-${now}-s3-cin`, beats: 4, subdivisions: 1, pattern: generateDefaultPattern(4, 1) },
         { id: `m-${now}-s3-m1`, beats: 4, subdivisions: 2, pattern: generateDefaultPattern(4, 2) },
@@ -145,7 +188,7 @@ export const createDemoSetlist = (): Setlist[] => {
     const demoSetlist: Setlist = {
         id: 'setlist-demo-1',
         name: 'Demo',
-        songs: [starterSong, waltzSong, verseChorusSong, oddTimeSong]
+        songs: [starterSong, waltzSong, everybodyWantsToRuleTheWorldSong, comeTogetherSong, verseChorusSong, oddTimeSong]
     };
 
     const mySetlist: Setlist = {

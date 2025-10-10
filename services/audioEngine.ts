@@ -224,7 +224,7 @@ export class AudioEngine {
   }
 
   /** Starts the metronome playback. */
-  public start() {
+  public start(startMeasureIndex = 0) {
     if (this.isRunning || !this.audioContext || !this.schedulerWorker) return;
     this.audioContext.resume();
 
@@ -236,9 +236,20 @@ export class AudioEngine {
     }
 
     this.isRunning = true;
-    this.currentMeasureIndex = 0;
+    
+    // Handle starting from a specific measure
+    this.currentMeasureIndex = (startMeasureIndex >= 0 && startMeasureIndex < this.measureSequence.length) ? startMeasureIndex : 0;
     this.currentStepInMeasure = 0;
-    this.globalStep = 0;
+    
+    // Recalculate globalStep to match the starting measure
+    let newGlobalStep = 0;
+    for (let i = 0; i < this.currentMeasureIndex; i++) {
+        if (this.measureSequence[i]) {
+            newGlobalStep += this.measureSequence[i].pattern.length;
+        }
+    }
+    this.globalStep = newGlobalStep;
+    
     this.nextNoteTime = this.audioContext.currentTime + 0.05; // Add a small buffer
     
     this.applyCurrentMeasureSettings();
