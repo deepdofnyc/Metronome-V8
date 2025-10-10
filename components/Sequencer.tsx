@@ -419,13 +419,33 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
               <div className={`mb-4 border-t border-white/10 transition-opacity ${isEditMode ? 'opacity-50' : ''}`}></div>
               
               <div className={`flex items-center gap-2 transition-opacity ${isEditMode ? 'opacity-50 pointer-events-none' : ''}`}>
-                  <button onClick={() => onCountInChange(!countInEnabled)} disabled={isEditMode} className={`flex-1 font-bold py-2.5 rounded-2xl transition-all duration-300 uppercase tracking-wider text-sm ${countInEnabled ? 'bg-gray-400 text-black' : 'bg-black/20 text-white/70'}`} aria-pressed={countInEnabled}>Count In</button>
-                  <button onClick={() => onLoopChange(!loopEnabled)} disabled={isEditMode} className={`flex-1 font-bold py-2.5 rounded-2xl transition-all duration-300 uppercase tracking-wider text-sm ${loopEnabled ? 'bg-gray-400 text-black' : 'bg-black/20 text-white/70'}`} aria-pressed={loopEnabled}>Loop</button>
+                  <button 
+                    onClick={() => onCountInChange(!countInEnabled)} 
+                    disabled={isEditMode} 
+                    className={`flex-1 h-11 flex items-center justify-center font-bold rounded-2xl transition-all duration-300 uppercase tracking-wider text-sm ${countInEnabled ? 'bg-gray-400 text-black' : 'bg-black/20 text-white/70'}`} 
+                    aria-pressed={countInEnabled}
+                  >
+                    Count In
+                  </button>
+                  <button 
+                    onClick={() => onLoopChange(!loopEnabled)} 
+                    disabled={isEditMode} 
+                    className={`flex-1 h-11 flex items-center justify-center font-bold rounded-2xl transition-all duration-300 uppercase tracking-wider text-sm ${loopEnabled ? 'bg-gray-400 text-black' : 'bg-black/20 text-white/70'}`} 
+                    aria-pressed={loopEnabled}
+                  >
+                    Loop
+                  </button>
                   <button 
                       onClick={handleRandomizeClick} 
                       disabled={isEditMode || selectedMeasureIndices.length === 0}
-                      className="w-12 h-11 flex-shrink-0 flex items-center justify-center rounded-2xl bg-black/20 text-white/70 transition-colors hover:enabled:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className={`
+                          h-11 flex-shrink-0 flex items-center justify-center rounded-2xl bg-black/20 text-white/70 
+                          transition-all duration-300 ease-in-out overflow-hidden
+                          hover:enabled:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed
+                          ${selectedMeasureIndices.length > 0 ? 'w-12 px-2' : 'w-0 px-0 opacity-0'}
+                      `}
                       aria-label="Randomize selected measure(s)"
+                      tabIndex={selectedMeasureIndices.length > 0 ? 0 : -1}
                   >
                       <div className={isRandomizing ? 'animate-spin-dice' : ''}>
                           <DiceIcon className="h-6 w-6"/>
