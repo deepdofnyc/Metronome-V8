@@ -1,0 +1,452 @@
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { type Measure } from '../types';
+import { generateDefaultPattern } from '../utils';
+import RingSequencer from './RingSequencer';
+import StepGrid from './StepGrid';
+import { 
+    GridViewIcon, 
+    RingViewIcon, 
+    AdvSequencerIcon, 
+    SequenceIcon, 
+    PlusIcon, 
+    TrashIcon, 
+    EditIcon, 
+    DuplicateIcon,
+    CheckIcon,
+    GripIcon
+} from './Icons';
+
+interface SequencerProps {
+  // Simple (front) view props
+  beats: number;
+  subdivisions: number;
+  pattern: number[];
+  onPatternChange: (newPattern: number[]) => void;
+  currentStep: number; // Step within the simple view's single measure
+  bpm: number;
+  simpleView: 'rings' | 'grid';
+  onSimpleViewChange: (view: 'rings' | 'grid') => void;
+  
+  // Advanced (back) view props
+  measureSequence: Measure[];
+  onMeasureSequenceChange: (newSequence: Measure[]) => void;
+  onDuplicateMeasure: (index: number) => void;
+  globalCurrentStep: number; // Global step across all measures in the sequence
+  selectedMeasureIndices: number[];
+  onSetSelectedMeasureIndices: (indices: number[] | ((prev: number[]) => number[])) => void;
+  countInEnabled: boolean;
+  onCountInChange: (enabled: boolean) => void;
+  loopEnabled: boolean;
+  onLoopChange: (enabled: boolean) => void;
+  isEditMode: boolean;
+  onEditModeChange: (isEditing: boolean) => void;
+
+  // General props
+  isPlaying: boolean;
+  isFlipped: boolean; // Controls which side (simple/advanced) is visible
+  onFlip: (isFlipped: boolean) => void;
+  disabled?: boolean;
+}
+
+/**
+ * A flippable sequencer component.
+ * The front face shows a simple sequencer (grid or ring) for a single measure.
+ * The back face shows an advanced multi-measure sequence editor.
+ */
+const Sequencer: React.FC<SequencerProps> = (props) => {
+  const { 
+    beats, subdivisions, pattern, onPatternChange, currentStep, bpm,
+    simpleView, onSimpleViewChange, measureSequence, onMeasureSequenceChange, 
+    onDuplicateMeasure, globalCurrentStep, isPlaying, selectedMeasureIndices,
+    onSetSelectedMeasureIndices, isFlipped, onFlip, countInEnabled,
+    onCountInChange, loopEnabled, onLoopChange, isEditMode, onEditModeChange
+  } = props;
+  
+  // Refs for managing props during flip transition to prevent visual glitches
+  const prevFrontProps = useRef({ beats, subdivisions, pattern });
+  useEffect(() => {
+    prevFrontProps.current = { beats, subdivisions, pattern };
+  }, [beats, subdivisions, pattern]);
+  
+  const prevMeasureSequenceRef = useRef<Measure[]>(measureSequence);
+  useEffect(() => {
+    prevMeasureSequenceRef.current = measureSequence;
+  }, [measureSequence]);
+
+  const prevCountInRef = useRef<boolean>(countInEnabled);
+  useEffect(() => {
+    prevCountInRef.current = countInEnabled;
+  }, [countInEnabled]);
+
+  // Determine which props to display based on flip state to ensure smooth transitions
+  const displayBeats = isFlipped ? prevFrontProps.current.beats : beats;
+  const displaySubdivisions = isFlipped ? prevFrontProps.current.subdivisions : subdivisions;
+  const displayPattern = isFlipped ? prevFrontProps.current.pattern : pattern;
+
+  const flipperRef = useRef<HTMLDivElement>(null);
+  const frontContentRef = useRef<HTMLDivElement>(null);
+  const backContentRef = useRef<HTMLDivElement>(null);
+
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const [liveSequence, setLiveSequence] = useState<Measure[] | null>(null);
+  const [newlyAddedMeasureId, setNewlyAddedMeasureId] = useState<string | null>(null);
+  const singleSelectedMeasureIndex = useMemo(() => selectedMeasureIndices.length === 1 ? selectedMeasureIndices[0] : null, [selectedMeasureIndices]);
+  
+  const sequenceForBackView = liveSequence || (isFlipped ? measureSequence : prevMeasureSequenceRef.current);
+  const countInForBackView = isFlipped ? countInEnabled : prevCountInRef.current;
+
+
+  const { currentMeasureIndex: playingMeasureIndex, stepInMeasure: stepInPlayingMeasure } = useMemo(() => {
+    const sequenceToUse = isPlaying ? measureSequence : [];
+    if (globalCurrentStep === -1 || sequenceToUse.length === 0) {
+      return { currentMeasureIndex: -1, stepInMeasure: -1 };
+    }
+    let globalStepCounter = 0;
+    for (let i = 0; i < sequenceToUse.length; i++) {
+        const measure = sequenceToUse[i];
+        const measureLength = measure.pattern.length;
+        if (globalCurrentStep < globalStepCounter + measureLength) {
+            return { currentMeasureIndex: i, stepInMeasure: globalCurrentStep - globalStepCounter };
+        }
+        globalStepCounter += measureLength;
+    }
+    return { currentMeasureIndex: -1, stepInMeasure: -1 };
+  }, [globalCurrentStep, isPlaying, measureSequence]);
+
+  useEffect(() => {
+    // Follow the currently playing measure in the advanced view
+    if (isFlipped && isPlaying && playingMeasureIndex !== null && playingMeasureIndex > -1) {
+      if (!isEditMode && !draggedItemId) {
+          onSetSelectedMeasureIndices([playingMeasureIndex]);
+      }
+    }
+  }, [isFlipped, isPlaying, playingMeasureIndex, onSetSelectedMeasureIndices, isEditMode, draggedItemId]);
+
+  const measureForGrid = singleSelectedMeasureIndex !== null && sequenceForBackView[singleSelectedMeasureIndex]
+    ? sequenceForBackView[singleSelectedMeasureIndex]
+    : null;
+
+
+  useEffect(() => {
+    // Adjusts the height of the flipper container to match the visible content, ensuring a smooth flip animation.
+    const flipper = flipperRef.current;
+    const frontContent = frontContentRef.current;
+    const backContent = backContentRef.current;
+
+    if (flipper && frontContent && backContent) {
+      const setFlipperHeight = () => {
+        const height = isFlipped ? backContent.offsetHeight : frontContent.offsetHeight;
+        if (height > 0) {
+          flipper.style.height = `${height}px`;
+        }
+      };
+      
+      const observer = new ResizeObserver(setFlipperHeight);
+      observer.observe(frontContent);
+      observer.observe(backContent);
+      const timerId = setTimeout(setFlipperHeight, 0);
+      return () => { clearTimeout(timerId); observer.disconnect(); }
+    }
+  }, [isFlipped, sequenceForBackView, singleSelectedMeasureIndex, displayBeats, displaySubdivisions, isEditMode, simpleView]);
+
+
+  const handleSelectMeasureForEdit = (index: number) => {
+    if (props.disabled || draggedItemId) return;
+    
+    if (isEditMode) { // Multi-select in edit mode
+      onSetSelectedMeasureIndices(prev => {
+        const selected = new Set(prev);
+        if (selected.has(index)) selected.delete(index);
+        else selected.add(index);
+        return Array.from(selected);
+      });
+    } else { // Single-select (or deselect) outside edit mode
+      onSetSelectedMeasureIndices(prev => (prev.length === 1 && prev[0] === index) ? [] : [index]);
+    }
+  }
+
+  const handleAddMeasure = () => {
+    if (props.disabled || measureSequence.length >= 40) return;
+    const newMeasure: Measure = {
+      id: `m-${Date.now()}`,
+      beats: 4,
+      subdivisions: 4,
+      pattern: generateDefaultPattern(4, 4),
+    };
+    const sequence = liveSequence || measureSequence;
+    onMeasureSequenceChange([...sequence, newMeasure]);
+    setNewlyAddedMeasureId(newMeasure.id);
+    setTimeout(() => setNewlyAddedMeasureId(null), 500); // Corresponds to animation duration
+  };
+
+  const handleDeleteMeasure = () => {
+    if (props.disabled || selectedMeasureIndices.length === 0 || measureSequence.length <= 1) return;
+    const sequence = liveSequence || measureSequence;
+    const newSequence = sequence.filter((_, index) => !selectedMeasureIndices.includes(index));
+    onMeasureSequenceChange(newSequence);
+    onSetSelectedMeasureIndices([]);
+  };
+  
+  const handleDuplicateMeasure = () => {
+    if (props.disabled || singleSelectedMeasureIndex === null || measureSequence.length >= 40) return;
+    onDuplicateMeasure(singleSelectedMeasureIndex);
+    onSetSelectedMeasureIndices([singleSelectedMeasureIndex + 1]);
+  };
+
+  // --- Drag & Drop Logic for reordering measures ---
+  const handleDragStart = (e: React.DragEvent<HTMLButtonElement>, measureId: string) => {
+    if (!isEditMode) { e.preventDefault(); return; }
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', measureId);
+    setDraggedItemId(measureId);
+    setLiveSequence([...measureSequence]); // Use a temporary sequence for live reordering
+  };
+
+  const handleDragEnter = (hoverMeasureId: string) => {
+    if (!isEditMode || !draggedItemId || !liveSequence || draggedItemId === hoverMeasureId) return;
+
+    const dragIndex = liveSequence.findIndex(m => m.id === draggedItemId);
+    const hoverIndex = liveSequence.findIndex(m => m.id === hoverMeasureId);
+    if (dragIndex === -1 || hoverIndex === -1 || dragIndex === hoverIndex) return;
+
+    const reordered = [...liveSequence];
+    const [draggedItem] = reordered.splice(dragIndex, 1);
+    reordered.splice(hoverIndex, 0, draggedItem);
+    setLiveSequence(reordered); // Update the live preview
+  };
+
+  const handleDragEnd = () => {
+    if (!isEditMode || !liveSequence || !draggedItemId) {
+      setDraggedItemId(null);
+      setLiveSequence(null);
+      return;
+    }
+    onMeasureSequenceChange(liveSequence); // Commit the change
+    const newIndex = liveSequence.findIndex(m => m.id === draggedItemId);
+    if (newIndex !== -1) { onSetSelectedMeasureIndices([newIndex]); }
+    setDraggedItemId(null);
+    setLiveSequence(null);
+  };
+
+  const handleMeasurePatternChange = (newPattern: number[]) => {
+    if (props.disabled || singleSelectedMeasureIndex === null) return;
+    const sequence = liveSequence || measureSequence;
+    const newSequence = [...sequence];
+    newSequence[singleSelectedMeasureIndex] = { ...newSequence[singleSelectedMeasureIndex], pattern: newPattern };
+    onMeasureSequenceChange(newSequence);
+  };
+  
+  const stepForGrid = (singleSelectedMeasureIndex === playingMeasureIndex) ? stepInPlayingMeasure : -1;
+  
+  const getHeaderText = () => {
+    if (isEditMode) {
+      if (selectedMeasureIndices.length > 0) return `${selectedMeasureIndices.length} Measures Selected`;
+      return 'Edit Sequence';
+    }
+    if (singleSelectedMeasureIndex !== null) {
+      const isCountInMeasure = countInForBackView && singleSelectedMeasureIndex === 0 && sequenceForBackView.length > 1;
+      const measureLabel = isCountInMeasure ? 'Count-in' : `Measure ${countInForBackView ? singleSelectedMeasureIndex : singleSelectedMeasureIndex + 1}`;
+      
+      if (isPlaying) return `Playing ${measureLabel}`;
+      return measureLabel;
+    }
+    return 'Measures';
+  };
+
+  const shouldIsolateCountIn = countInForBackView && sequenceForBackView.length > 4;
+
+  const renderMeasureButton = (measure: Measure, index: number) => {
+    const isCountInMeasure = countInForBackView && index === 0 && sequenceForBackView.length > 1;
+    const isEditableInThisMode = !(isEditMode && isCountInMeasure);
+    const isNewlyAdded = newlyAddedMeasureId === measure.id;
+    const isBeingDragged = isEditMode && draggedItemId === measure.id;
+    const isSelected = selectedMeasureIndices.includes(index);
+    const isPlayingThisMeasure = !isEditMode && index === playingMeasureIndex;
+
+    let ringClass = '';
+    if (isSelected) {
+      if (isPlaying && isPlayingThisMeasure) {
+        ringClass = 'ring-2 ring-offset-2 ring-offset-[var(--container-bg)] ring-[var(--strong-beat-accent)] animate-pulse';
+      } else if (isEditableInThisMode) {
+        ringClass = 'ring-2 ring-offset-2 ring-offset-[var(--container-bg)] ring-blue-500';
+      }
+    }
+
+    const buttonClasses = [
+      'relative w-16 h-16 rounded-full border border-[var(--container-border)] flex flex-col items-center justify-center',
+      'transition-all duration-300 ease-in-out',
+      isEditMode && isEditableInThisMode ? 'rounded-tl-lg' : '', // Visual cue for draggable area
+      isCountInMeasure ? 'bg-[var(--primary-accent)]/10' : '', ringClass,
+      isEditMode && !isEditableInThisMode ? 'opacity-60' : '',
+      isEditMode ? '' : 'hover:bg-white/5',
+      props.disabled ? 'cursor-not-allowed' : (isEditMode ? (isEditableInThisMode ? 'cursor-grab' : 'cursor-default') : 'cursor-pointer'),
+      isBeingDragged ? 'opacity-30' : 'opacity-100',
+      isNewlyAdded ? 'animate-drop-in' : '',
+    ].filter(Boolean).join(' ');
+
+    return (
+      <button 
+        key={measure.id}
+        onClick={isEditMode && !isEditableInThisMode ? undefined : () => handleSelectMeasureForEdit(index)}
+        draggable={isEditMode && isEditableInThisMode}
+        onDragStart={(e) => handleDragStart(e, measure.id)}
+        onDragEnd={handleDragEnd}
+        onDragEnter={() => { if (isEditableInThisMode) handleDragEnter(measure.id); }}
+        onDragOver={(e) => { if (isEditMode && isEditableInThisMode) e.preventDefault(); }}
+        className={buttonClasses}
+        aria-disabled={isEditMode && !isEditableInThisMode}
+      >
+        {isEditMode && isEditableInThisMode && (
+          <div className="absolute top-1 left-1 p-1 cursor-grab active:cursor-grabbing group"><GripIcon /></div>
+        )}
+        <div className={`flex flex-col items-center justify-center transition-opacity ${isEditMode && !isSelected && !isBeingDragged ? 'opacity-40' : ''}`}>
+          {isCountInMeasure ? (
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--primary-accent)]">Count In</span>
+          ) : (
+              <>
+                  <span className="text-xl font-bold text-white leading-none">{measure.beats}</span>
+                  <div className="w-8 h-px bg-[var(--text-secondary)] my-0.5"></div>
+                  <span className="text-lg text-[var(--text-secondary)] leading-none">{measure.subdivisions}</span>
+              </>
+          )}
+        </div>
+        {measure.bpm && (
+          <span className={`absolute -bottom-1 text-xs text-white/70 font-mono bg-[var(--container-bg)] px-1 rounded-sm transition-opacity ${isEditMode ? 'opacity-40' : ''}`}>{measure.bpm}</span>
+        )}
+      </button>
+    );
+  };
+
+
+  const containerClasses = `w-full bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl p-[15px] transition-opacity duration-300 flip-container ${props.disabled ? 'opacity-50' : ''} overflow-hidden`;
+  
+  return (
+    <div className={containerClasses}>
+      <div ref={flipperRef} className={`flipper ${isFlipped ? 'is-flipped' : ''}`}>
+        {/* FRONT FACE: Simple Sequencer */}
+        <div className="front" id="sequencer-front" aria-hidden={isFlipped}>
+          <div ref={frontContentRef} className="flex flex-col w-full">
+            {simpleView === 'grid' ? (
+                <StepGrid 
+                    beats={displayBeats}
+                    subdivisions={displaySubdivisions}
+                    pattern={displayPattern}
+                    onPatternChange={onPatternChange}
+                    currentStep={currentStep}
+                    isPlaying={isPlaying}
+                    disabled={props.disabled}
+                />
+            ) : (
+                <RingSequencer
+                    beats={displayBeats}
+                    subdivisions={displaySubdivisions}
+                    pattern={displayPattern}
+                    onPatternChange={onPatternChange}
+                    currentStep={currentStep}
+                    isPlaying={isPlaying}
+                    disabled={props.disabled}
+                    bpm={bpm}
+                />
+            )}
+            <div className="mt-4 flex justify-between items-center pt-4 border-t border-white/10">
+              <button
+                onClick={() => onSimpleViewChange(simpleView === 'grid' ? 'rings' : 'grid')}
+                className="flex items-center gap-1 bg-black/20 p-1 rounded-full cursor-pointer transition-colors hover:bg-black/40"
+                aria-label={`Switch to ${simpleView === 'grid' ? 'ring' : 'grid'} view`}
+                aria-live="polite"
+              >
+                <div className={`p-1.5 rounded-full transition-colors duration-300 ${simpleView === 'grid' ? 'text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'}`} aria-hidden="true"><GridViewIcon /></div>
+                <div className={`p-1.5 rounded-full transition-colors duration-300 ${simpleView === 'rings' ? 'text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'}`} aria-hidden="true"><RingViewIcon /></div>
+              </button>
+              <button
+                onClick={() => onFlip(true)}
+                className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors py-2"
+                aria-controls="sequencer-back"
+                aria-expanded="false"
+              >
+                <AdvSequencerIcon />
+                Adv. Sequencer
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* BACK FACE: Advanced Sequencer */}
+        <div className="back" id="sequencer-back" aria-hidden={!isFlipped}>
+          <div ref={backContentRef} className="flex flex-col w-full">
+             <div className="flex-grow flex flex-col">
+              <div className="flex justify-between items-center mb-4 h-12">
+                <h4 className="flex flex-1 min-w-0 items-center gap-2 text-left text-sm uppercase tracking-wider text-[var(--text-secondary)]">
+                    <SequenceIcon />
+                    <span className="truncate">{getHeaderText()}</span>
+                </h4>
+                <div className="flex-shrink-0 pl-2 flex items-center gap-2">
+                  {isEditMode && (
+                    <>
+                      <button onClick={handleDuplicateMeasure} disabled={measureSequence.length >= 40 || selectedMeasureIndices.length !== 1} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Duplicate selected measure"><DuplicateIcon /></button>
+                      <button onClick={handleDeleteMeasure} disabled={selectedMeasureIndices.length === 0 || measureSequence.length <= 1} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/20 text-gray-300 hover:bg-red-600/80 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Delete selected measures"><TrashIcon /></button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => onEditModeChange(!isEditMode)}
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white transition-colors"
+                    aria-label={isEditMode ? "Done editing" : "Enter edit mode"}
+                  >
+                    {isEditMode ? <CheckIcon /> : <EditIcon />}
+                  </button>
+                  <button onClick={handleAddMeasure} disabled={props.disabled || measureSequence.length >= 40} className="flex items-center justify-center w-10 h-10 rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Add measure"><PlusIcon /></button>
+                </div>
+              </div>
+
+              <div className={`mb-4 border-t border-white/10 transition-opacity ${isEditMode ? 'opacity-50' : ''}`}></div>
+
+              <div className={`grid grid-cols-2 gap-4 transition-opacity ${isEditMode ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <button onClick={() => onCountInChange(!countInEnabled)} disabled={isEditMode} className={`w-full font-bold py-2.5 rounded-2xl transition-all duration-300 uppercase tracking-wider text-sm ${countInEnabled ? 'bg-gray-400 text-black' : 'bg-black/20 text-white/70'}`} aria-pressed={countInEnabled}>Count In</button>
+                  <button onClick={() => onLoopChange(!loopEnabled)} disabled={isEditMode} className={`w-full font-bold py-2.5 rounded-2xl transition-all duration-300 uppercase tracking-wider text-sm ${loopEnabled ? 'bg-gray-400 text-black' : 'bg-black/20 text-white/70'}`} aria-pressed={loopEnabled}>Loop</button>
+              </div>
+              
+              <div className={`my-4 border-t border-white/10 transition-opacity ${isEditMode ? 'opacity-50' : ''}`}></div>
+
+              {shouldIsolateCountIn && sequenceForBackView.length > 0 ? (
+                <div onDragOver={(e) => { if(isEditMode && e.target !== e.currentTarget.firstChild?.firstChild) e.preventDefault(); }}>
+                    <div className="mb-4 pb-4 border-b border-white/10 flex justify-center">{renderMeasureButton(sequenceForBackView[0], 0)}</div>
+                    <div className="grid grid-cols-4 justify-items-center gap-x-1 gap-y-3">{sequenceForBackView.slice(1).map((measure, i) => renderMeasureButton(measure, i + 1))}</div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 justify-items-center gap-x-1 gap-y-3" onDragOver={(e) => isEditMode && e.preventDefault()}>
+                  {sequenceForBackView.map((measure, index) => renderMeasureButton(measure, index))}
+                </div>
+              )}
+
+              {measureForGrid && !isEditMode && (
+                <div key={measureForGrid.id} className="mt-4 pt-4 border-t border-white/10 animate-panel">
+                  <StepGrid
+                    beats={measureForGrid.beats}
+                    subdivisions={measureForGrid.subdivisions}
+                    pattern={measureForGrid.pattern}
+                    onPatternChange={handleMeasurePatternChange}
+                    currentStep={stepForGrid}
+                    isPlaying={isPlaying}
+                    disabled={props.disabled || singleSelectedMeasureIndex === null}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="mt-4 flex justify-center pt-4 border-t border-white/10">
+              <button
+                onClick={() => { onFlip(false); onSetSelectedMeasureIndices([]); onEditModeChange(false); }}
+                className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors py-2"
+                aria-controls="sequencer-front"
+                aria-expanded="true"
+              >
+                Back to Simple View
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Sequencer;
