@@ -1,15 +1,10 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { type PlaylistItem, type MetronomeSettings } from '../types';
+import { useMetronome } from '../contexts/MetronomeContext';
 import { PlusIcon, DiceIcon } from './Icons';
 
 interface QuickSongBarProps {
-  quickSongs: (PlaylistItem | null)[];
-  onLoadSong: (slotIndex: number) => void;
-  onSaveSong: (slotIndex: number) => void;
-  onRandomize: () => void;
-  loadedQuickSongIndex: number | null;
   disabled?: boolean;
-  onPressingChange: (isPressing: boolean, slotIndex: number) => void;
 }
 
 const QuickSongSlot: React.FC<{
@@ -214,7 +209,16 @@ const RandomizerSlot: React.FC<{ onRandomize: () => void; disabled?: boolean; }>
     );
 };
 
-const QuickSongBar: React.FC<QuickSongBarProps> = ({ quickSongs, onLoadSong, onSaveSong, onRandomize, loadedQuickSongIndex, disabled, onPressingChange }) => {
+const QuickSongBar: React.FC<QuickSongBarProps> = ({ disabled }) => {
+  const { 
+      quickSongs, 
+      handleLoadQuickSong, 
+      handleSaveQuickSong, 
+      handleRandomize, 
+      loadedQuickSongIndex,
+      handleQuickSongPressingChange 
+  } = useMetronome();
+
   const firstThreeSlotsEmpty = quickSongs.slice(0, 3).every(song => song === null);
 
   return (
@@ -226,13 +230,13 @@ const QuickSongBar: React.FC<QuickSongBarProps> = ({ quickSongs, onLoadSong, onS
             slotIndex={index}
             song={quickSongs[index]}
             isLoaded={loadedQuickSongIndex === index}
-            onLoad={() => onLoadSong(index)}
-            onSave={() => onSaveSong(index)}
+            onLoad={() => handleLoadQuickSong(index)}
+            onSave={() => handleSaveQuickSong(index)}
             disabled={disabled}
-            onPressingChange={(isPressing) => onPressingChange(isPressing, index)}
+            onPressingChange={(isPressing) => handleQuickSongPressingChange(isPressing, index)}
           />
         ))}
-        <RandomizerSlot onRandomize={onRandomize} disabled={disabled} />
+        <RandomizerSlot onRandomize={handleRandomize} disabled={disabled} />
       </div>
       {firstThreeSlotsEmpty && (
         <p className="text-xs text-center text-[var(--text-secondary)]">

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { playStepPreview } from '../services/audioPreviews';
 
@@ -137,7 +135,7 @@ const StepGrid: React.FC<StepGridProps> = ({ beats, subdivisions, pattern, onPat
               case 3: colorClass = 'bg-[var(--strong-beat-accent)]'; break;
               case 2: colorClass = 'bg-[var(--primary-accent)] opacity-60'; break;
               case 1: colorClass = 'bg-[var(--secondary-accent)]'; break;
-              default: colorClass = `bg-white/10 ${!disabled ? 'hover:bg-white/20' : ''}`;
+              default: colorClass = `bg-transparent border-4 border-white/10 ${!disabled ? 'hover:border-white/20' : ''}`;
             }
 
             let numberClass = `${numberFontSize} font-bold text-black/60`;

@@ -1,16 +1,13 @@
 
+
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { MIN_BPM, MAX_BPM } from '../constants';
+import { useMetronome } from '../contexts/MetronomeContext';
 import { PlayIcon, PauseIcon, BpmMinusIcon, BpmPlusIcon } from './Icons';
 
 interface BpmControlProps {
-  bpm: number;
-  onChange: (newValue: number) => void;
-  beatTrigger: number;
   isShrunk?: boolean;
-  hasSongs?: boolean;
   disabled?: boolean;
-  onIsDraggingChange?: (isDragging: boolean) => void;
   showTapButton?: boolean;
   showSlider?: boolean;
   min?: number;
@@ -18,18 +15,16 @@ interface BpmControlProps {
 }
 
 const BpmControl: React.FC<BpmControlProps> = ({ 
-  bpm, 
-  onChange, 
-  beatTrigger, 
   isShrunk = false, 
-  hasSongs = false, 
   disabled = false, 
   showTapButton = true,
   showSlider = true,
-  onIsDraggingChange = (_isDragging: boolean) => {},
   min = MIN_BPM,
   max = MAX_BPM,
 }) => {
+  const { settingsForDisplay, updateSetting, beatTrigger, setIsBpmSliderDragging } = useMetronome();
+  const { bpm } = settingsForDisplay;
+
   // State for manual BPM input
   const [isEditingBpm, setIsEditingBpm] = useState(false);
   const [editedBpm, setEditedBpm] = useState(String(bpm));
@@ -66,23 +61,23 @@ const BpmControl: React.FC<BpmControlProps> = ({
   }, [bpm]);
 
   useEffect(() => {
-    onIsDraggingChange(isDragging);
-  }, [isDragging, onIsDraggingChange]);
+    setIsBpmSliderDragging(isDragging);
+  }, [isDragging, setIsBpmSliderDragging]);
 
   const startContinuousChange = useCallback((direction: 'increment' | 'decrement') => {
     if (continuousChangeActive.current) return;
     continuousChangeActive.current = true;
     
     const changeAmount = direction === 'increment' ? 1 : -1;
-    onChange(Math.max(min, Math.min(max, bpmRef.current + changeAmount)));
+    updateSetting('bpm', Math.max(min, Math.min(max, bpmRef.current + changeAmount)));
 
     continuousChangeTimeoutRef.current = window.setTimeout(() => {
       continuousChangeIntervalRef.current = window.setInterval(() => {
         const newBpm = bpmRef.current + changeAmount;
-        onChange(Math.max(min, Math.min(max, newBpm)));
+        updateSetting('bpm', Math.max(min, Math.min(max, newBpm)));
       }, 80);
     }, 600);
-  }, [onChange, min, max]);
+  }, [updateSetting, min, max]);
   
   const stopContinuousChange = useCallback(() => {
     if (continuousChangeTimeoutRef.current) {
@@ -127,10 +122,10 @@ const BpmControl: React.FC<BpmControlProps> = ({
   const handleBpmEditCommit = useCallback(() => {
     const newBpm = parseInt(editedBpm, 10);
     if (!isNaN(newBpm)) {
-        onChange(Math.max(min, Math.min(max, newBpm)));
+        updateSetting('bpm', Math.max(min, Math.min(max, newBpm)));
     }
     setIsEditingBpm(false);
-  }, [editedBpm, onChange, min, max]);
+  }, [editedBpm, updateSetting, min, max]);
 
   const handleBpmEditKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -165,7 +160,7 @@ const BpmControl: React.FC<BpmControlProps> = ({
       const averageInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
       if (averageInterval > 0) {
         const newBpm = Math.round(60000 / averageInterval);
-        onChange(Math.max(min, Math.min(max, newBpm)));
+        updateSetting('bpm', Math.max(min, Math.min(max, newBpm)));
       }
     }
     
@@ -232,10 +227,10 @@ const BpmControl: React.FC<BpmControlProps> = ({
         const clampedValue = Math.max(min, Math.min(max, Math.round(newValue)));
 
         if (clampedValue !== bpmRef.current) {
-            onChange(clampedValue);
+            updateSetting('bpm', clampedValue);
         }
     }
-  }, [isInteracting, isDragging, onChange, handleInteractionEnd, min, max]);
+  }, [isInteracting, isDragging, updateSetting, handleInteractionEnd, min, max]);
   
   const handleInteractionStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const target = e.target as HTMLElement;

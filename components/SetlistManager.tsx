@@ -1,7 +1,9 @@
 
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { type PlaylistItem, type Setlist, type MetronomeSettings } from '../types';
+import { useMetronome } from '../contexts/MetronomeContext';
 import { 
     DragHandleIcon,
     SetlistPlayIcon,
@@ -16,34 +18,7 @@ import {
     SequenceRingIcon
 } from './Icons';
 
-interface SetlistActions {
-    saveChanges: () => void;
-    cancelChanges: () => void;
-    addNewSetlist: () => void;
-    addNewSong: (setlistId: string) => void;
-    updateSetlistName: (id: string, newName: string) => void;
-    updateSongName: (setlistId: string, songId: string, newName: string) => void;
-    deleteSetlist: (id: string) => void;
-    deleteSong: (setlistId: string, songId: string) => void;
-    duplicateSetlist: (id: string) => void;
-    duplicateSong: (setlistId: string, songId: string) => void;
-    reorderSetlists: (reorderedSetlists: Setlist[]) => void;
-    reorderSongs: (setlistId: string, reorderedSongs: PlaylistItem[]) => void;
-}
-
 interface SetlistManagerProps {
-  setlists: Setlist[];
-  currentlyPlayingId: string | null;
-  playingSetlistId: string | null;
-  loadedSongInfo: { setlistId: string; songId: string } | null;
-  newlyAddedItemId: { type: 'setlist' | 'song', id: string } | null;
-  isDirty: boolean;
-  actions: SetlistActions;
-  onLoadSong: (song: PlaylistItem, setlistId: string, preventStop?: boolean) => void;
-  onLoadAndPlaySong: (song: PlaylistItem, setlistId: string) => void;
-  onStop: () => void;
-  isPlaying: boolean;
-  onRenameTriggered: () => void;
   isContainerOpen: boolean;
   onToggleVisibility: () => void;
   onActiveSetlistChange: (id: string | null) => void;
@@ -53,7 +28,22 @@ const COLORS = ['#1e3a8a', '#312e81', '#4c1d95', '#581c87', '#831843', '#881337'
 const getSetlistColor = (index: number) => COLORS[index % COLORS.length];
 
 const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
-  const { setlists, actions, onToggleVisibility, isContainerOpen, onActiveSetlistChange } = props;
+  const { onToggleVisibility, isContainerOpen, onActiveSetlistChange } = props;
+  const {
+    setlists,
+    currentlyPlayingId,
+    playingSetlistId,
+    loadedSongInfo,
+    newlyAddedItemId,
+    isDirty,
+    setlistActions,
+    handleLoadSong,
+    handleLoadAndPlay,
+    handleStop,
+    isPlaying,
+    onRenameTriggered,
+  } = useMetronome();
+  
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeSetlistId, setActiveSetlistId] = useState<string | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -103,20 +93,20 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
   }, [editingItemId]);
 
   useEffect(() => {
-    if (props.newlyAddedItemId) {
-      const { type, id } = props.newlyAddedItemId;
+    if (newlyAddedItemId) {
+      const { type, id } = newlyAddedItemId;
       setNewItemId(id);
       setEditingItemId(id);
       if (!isContainerOpen) onToggleVisibility();
 
       if (type === 'setlist') {
         setActiveSetlistId(null);
-        const newSetlist = props.setlists.find(s => s.id === id);
+        const newSetlist = setlists.find(s => s.id === id);
         if (newSetlist) {
             setEditingText(newSetlist.name);
         }
       } else { // song
-        for (const setlist of props.setlists) {
+        for (const setlist of setlists) {
           const newSong = setlist.songs.find(s => s.id === id);
           if (newSong) {
             setActiveSetlistId(setlist.id);
@@ -125,9 +115,9 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
           }
         }
       }
-      props.onRenameTriggered();
+      onRenameTriggered();
     }
-  }, [props.newlyAddedItemId, props.setlists, isContainerOpen, onToggleVisibility, props.onRenameTriggered]);
+  }, [newlyAddedItemId, setlists, isContainerOpen, onToggleVisibility, onRenameTriggered]);
 
   const handleStartRename = (e: React.MouseEvent | React.TouchEvent, id: string, currentName: string) => {
     e.stopPropagation();
@@ -148,11 +138,11 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
 
     const setlist = setlists.find(sl => sl.id === editingItemId);
     if (setlist) {
-      actions.updateSetlistName(editingItemId, trimmedText);
+      setlistActions.updateSetlistName(editingItemId, trimmedText);
     } else {
       for (const sl of setlists) {
         if (sl.songs.some(s => s.id === editingItemId)) {
-          actions.updateSongName(sl.id, editingItemId, trimmedText);
+          setlistActions.updateSongName(sl.id, editingItemId, trimmedText);
           break;
         }
       }
@@ -179,7 +169,7 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
   const handleAddNewSetlistClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsEditMode(false); 
-    actions.addNewSetlist();
+    setlistActions.addNewSetlist();
   };
 
   const handleSetlistDragEnd = () => {
@@ -193,7 +183,7 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
         }
 
         reordered.splice(dropIndex, 0, item);
-        actions.reorderSetlists(reordered);
+        setlistActions.reorderSetlists(reordered);
       }
       dragSetlist.current = null;
       dragOverSetlist.current = null;
@@ -216,7 +206,7 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
         }
         
         reorderedSongs.splice(dropIndex, 0, draggedItem);
-        actions.reorderSongs(setlistId, reorderedSongs);
+        setlistActions.reorderSongs(setlistId, reorderedSongs);
     }
     dragSong.current = null;
     dragOverSong.current = null;
@@ -225,14 +215,13 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
   
   const handleSetlistClick = (setlist: Setlist) => {
     if (isEditMode || editingItemId === setlist.id) return;
-    if (props.isPlaying) {
-        props.onStop();
+    if (isPlaying) {
+        handleStop();
     }
     setActiveSetlistId(setlist.id);
   };
 
   const handleSongClick = (song: PlaylistItem) => {
-    const { currentlyPlayingId, onLoadSong } = props;
     if (isEditMode || editingItemId === song.id) return;
 
     // If a song is playing, clicking another song does nothing.
@@ -241,7 +230,7 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
     }
 
     // If nothing is playing, load the song.
-    onLoadSong(song, activeSetlistId as string);
+    handleLoadSong(song, activeSetlistId as string);
   };
 
 
@@ -257,8 +246,8 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
               className="flex items-center flex-grow min-w-0 pl-[9px] group cursor-pointer mr-2"
               onClick={() => {
                 if (document.activeElement?.tagName === 'INPUT' || editingItemId) return;
-                if (props.playingSetlistId === activeSetlistId) {
-                    props.onStop();
+                if (playingSetlistId === activeSetlistId) {
+                    handleStop();
                 }
                 setActiveSetlistId(null);
               }}
@@ -287,7 +276,7 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
                 <button onClick={handleToggleEditMode} disabled={!activeSetlist || activeSetlist.songs.length === 0} className="flex items-center justify-center px-2 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" aria-label="Edit songs">
                     <div className={`p-2 rounded-full pointer-events-none transition-colors ${isEditMode ? 'bg-blue-500 text-white' : 'text-gray-300 bg-white/10'}`}><EditIcon /></div>
                 </button>
-                <button onClick={() => actions.addNewSong(activeSetlistId as string)} className="flex items-center justify-center px-2 rounded-lg hover:bg-white/5 transition-colors" aria-label="Add song to setlist">
+                <button onClick={() => setlistActions.addNewSong(activeSetlistId as string)} className="flex items-center justify-center px-2 rounded-lg hover:bg-white/5 transition-colors" aria-label="Add song to setlist">
                   <div className="p-2 rounded-full pointer-events-none text-gray-300 bg-white/10"><PlusIcon/></div>
                 </button>
             </div>
@@ -335,7 +324,7 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
                         const setlistColor = getSetlistColor(setlistIndex);
                         const setlistBgColor = isCreatingThisSetlist ? 'rgba(255,255,255,0.15)' : setlistColor;
                         const ringClass = isCreatingThisSetlist ? 'ring-2 ring-blue-500' : '';
-                        const isPlayingThisSetlist = props.playingSetlistId === setlist.id;
+                        const isPlayingThisSetlist = playingSetlistId === setlist.id;
 
                         return (
                             <React.Fragment key={setlist.id}>
@@ -389,8 +378,8 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
                                         ) : isEditMode ? (
                                             <div className="flex items-center gap-1">
                                                 <button onClick={(e) => handleStartRename(e, setlist.id, setlist.name)} className="p-2 rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white" aria-label="Rename setlist"><EditIcon /></button>
-                                                <button onClick={(e) => { e.stopPropagation(); actions.duplicateSetlist(setlist.id); }} className="p-2 rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white" aria-label="Duplicate setlist"><DuplicateIcon /></button>
-                                                <button onClick={(e) => { e.stopPropagation(); actions.deleteSetlist(setlist.id); }} className="p-2 rounded-full bg-black/20 text-gray-300 hover:bg-red-600/80 hover:text-white" aria-label="Delete setlist"><TrashIcon /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); setlistActions.duplicateSetlist(setlist.id); }} className="p-2 rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white" aria-label="Duplicate setlist"><DuplicateIcon /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); setlistActions.deleteSetlist(setlist.id); }} className="p-2 rounded-full bg-black/20 text-gray-300 hover:bg-red-600/80 hover:text-white" aria-label="Delete setlist"><TrashIcon /></button>
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-2 pr-1">
@@ -423,10 +412,10 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
                     {activeSetlist.songs.length === 0 ? <div className="flex items-center justify-center min-h-[96px]"><p className="text-center text-white/70 py-4 text-sm font-light px-4">This setlist is empty.</p></div> :
                     <>
                     {activeSetlist.songs.map((song, songIndex) => {
-                        const isPlaying = props.currentlyPlayingId === song.id;
-                        const isLoaded = props.loadedSongInfo?.songId === song.id && !isPlaying;
+                        const isPlaying = currentlyPlayingId === song.id;
+                        const isLoaded = loadedSongInfo?.songId === song.id && !isPlaying;
                         const isRenaming = editingItemId === song.id;
-                        const hasUnsavedChanges = props.isDirty && props.loadedSongInfo?.songId === song.id;
+                        const hasUnsavedChanges = isDirty && loadedSongInfo?.songId === song.id;
                         const bpm = (song.settings as MetronomeSettings).bpm ?? 'N/A';
                         const setlistColor = getSetlistColor(setlists.findIndex(s => s.id === activeSetlistId));
                         const ringClass = isLoaded || isRenaming ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-black/20' : '';
@@ -482,14 +471,14 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
                                             <button onClick={(e) => { e.stopPropagation(); handleSaveName()}} className="px-4 h-9 flex items-center rounded-3xl bg-[var(--primary-accent)] text-black text-sm font-bold hover:bg-[var(--primary-accent-dark)] transition-colors" aria-label="Save changes">Save</button>
                                         ) : hasUnsavedChanges ? (
                                             <div className="flex items-center gap-2">
-                                                <button onClick={(e) => { e.stopPropagation(); actions.cancelChanges() }} className="px-4 h-9 flex items-center rounded-3xl bg-white/10 text-white/80 text-sm font-bold hover:bg-white/20 transition-colors" aria-label="Cancel changes">Cancel</button>
-                                                <button onClick={(e) => { e.stopPropagation(); actions.saveChanges()}} className="px-4 h-9 flex items-center rounded-3xl bg-[var(--primary-accent)] text-black text-sm font-bold hover:bg-[var(--primary-accent-dark)] transition-colors" aria-label="Save changes">Save</button>
+                                                <button onClick={(e) => { e.stopPropagation(); setlistActions.cancelChanges() }} className="px-4 h-9 flex items-center rounded-3xl bg-white/10 text-white/80 text-sm font-bold hover:bg-white/20 transition-colors" aria-label="Cancel changes">Cancel</button>
+                                                <button onClick={(e) => { e.stopPropagation(); setlistActions.saveChanges()}} className="px-4 h-9 flex items-center rounded-3xl bg-[var(--primary-accent)] text-black text-sm font-bold hover:bg-[var(--primary-accent-dark)] transition-colors" aria-label="Save changes">Save</button>
                                             </div>
                                         ) : isEditMode ? (
                                             <div className="flex items-center gap-1">
                                                 <button onClick={(e) => handleStartRename(e, song.id, song.name)} className="p-2 rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white" aria-label="Rename song"><EditIcon /></button>
-                                                <button onClick={(e) => { e.stopPropagation(); actions.duplicateSong(activeSetlistId as string, song.id) }} className="p-2 rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white"><DuplicateIcon /></button>
-                                                <button onClick={(e) => { e.stopPropagation(); actions.deleteSong(activeSetlistId as string, song.id) }} className="p-2 rounded-full bg-black/20 text-gray-300 hover:bg-red-600/80 hover:text-white"><TrashIcon /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); setlistActions.duplicateSong(activeSetlistId as string, song.id) }} className="p-2 rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white"><DuplicateIcon /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); setlistActions.deleteSong(activeSetlistId as string, song.id) }} className="p-2 rounded-full bg-black/20 text-gray-300 hover:bg-red-600/80 hover:text-white"><TrashIcon /></button>
                                             </div>
                                         ) : (
                                             <div className="flex items-center space-x-2">
@@ -516,7 +505,7 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
                                                     }
                                                 })()}
                                                 <span className="text-sm text-gray-400 font-mono w-16 text-right tabular-nums">{bpm} BPM</span>
-                                                <button onClick={(e) => {e.stopPropagation(); isPlaying ? props.onStop() : props.onLoadAndPlaySong(song, activeSetlistId as string)}} className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isPlaying ? 'bg-green-500 text-white hover:bg-green-400' : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white'}`} aria-label={isPlaying ? 'Stop' : 'Play'}>
+                                                <button onClick={(e) => {e.stopPropagation(); isPlaying ? handleStop() : handleLoadAndPlay(song, activeSetlistId as string)}} className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isPlaying ? 'bg-green-500 text-white hover:bg-green-400' : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white'}`} aria-label={isPlaying ? 'Stop' : 'Play'}>
                                                     {isPlaying ? <StopIcon /> : <SetlistPlayIcon />}
                                                 </button>
                                             </div>

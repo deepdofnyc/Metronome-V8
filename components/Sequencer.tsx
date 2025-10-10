@@ -1,10 +1,13 @@
 
 
+
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { type Measure } from '../types';
 import { generateDefaultPattern } from '../utils';
 import RingSequencer from './RingSequencer';
 import StepGrid from './StepGrid';
+import { useMetronome } from '../contexts/MetronomeContext';
 import { 
     GridViewIcon, 
     RingViewIcon, 
@@ -20,37 +23,11 @@ import {
 } from './Icons';
 
 interface SequencerProps {
-  // Simple (front) view props
-  beats: number;
-  subdivisions: number;
-  pattern: number[];
-  onPatternChange: (newPattern: number[]) => void;
-  currentStep: number; // Step within the simple view's single measure
-  bpm: number;
-  simpleView: 'rings' | 'grid';
-  onSimpleViewChange: (view: 'rings' | 'grid') => void;
-  beatSoundId: string;
-  subdivisionSoundId: string;
-  
-  // Advanced (back) view props
-  measureSequence: Measure[];
-  onMeasureSequenceChange: (newSequence: Measure[]) => void;
-  onDuplicateMeasure: (index: number) => void;
-  globalCurrentStep: number; // Global step across all measures in the sequence
-  selectedMeasureIndices: number[];
-  onSetSelectedMeasureIndices: (indices: number[] | ((prev: number[]) => number[])) => void;
-  countInEnabled: boolean;
-  onCountInChange: (enabled: boolean) => void;
-  loopEnabled: boolean;
-  onLoopChange: (enabled: boolean) => void;
+  // UI state props managed by the parent component
+  isFlipped: boolean;
+  onFlip: (isFlipped: boolean) => void;
   isEditMode: boolean;
   onEditModeChange: (isEditing: boolean) => void;
-  onRandomizeSelectedMeasures: () => void;
-
-  // General props
-  isPlaying: boolean;
-  isFlipped: boolean; // Controls which side (simple/advanced) is visible
-  onFlip: (isFlipped: boolean) => void;
   disabled?: boolean;
 }
 
@@ -60,15 +37,41 @@ interface SequencerProps {
  * The back face shows an advanced multi-measure sequence editor.
  */
 const Sequencer: React.FC<SequencerProps> = (props) => {
-  const { 
-    beats, subdivisions, pattern, onPatternChange, currentStep, bpm,
-    simpleView, onSimpleViewChange, measureSequence, onMeasureSequenceChange, 
-    onDuplicateMeasure, globalCurrentStep, isPlaying, selectedMeasureIndices,
-    onSetSelectedMeasureIndices, isFlipped, onFlip, countInEnabled,
-    onCountInChange, loopEnabled, onLoopChange, isEditMode, onEditModeChange,
-    beatSoundId, subdivisionSoundId, onRandomizeSelectedMeasures
-  } = props;
+  const { isFlipped, onFlip, isEditMode, onEditModeChange } = props;
   
+  const {
+    settings,
+    settingsForDisplay,
+    simpleViewMeasure,
+    isPlaying,
+    stepInMeasure,
+    currentStep,
+    playingMeasureIndex,
+    stepInPlayingMeasure,
+    selectedMeasureIndices,
+    onSetSelectedMeasureIndices,
+    handlePatternChange,
+    handleMeasureSequenceChange,
+    handleDuplicateMeasure,
+    handleCountInChange,
+    handleLoopChange,
+    updateSetting,
+    handleRandomizeSelectedMeasures,
+  } = useMetronome();
+  
+  const { 
+    beats, subdivisions, pattern 
+  } = simpleViewMeasure;
+
+  const {
+    measureSequence,
+    countIn: countInEnabled,
+    loop: loopEnabled,
+    simpleView,
+  } = settings;
+  
+  const { beatSoundId, subdivisionSoundId, bpm } = settingsForDisplay;
+
   // Refs for managing props during flip transition to prevent visual glitches
   const prevFrontProps = useRef({ beats, subdivisions, pattern });
   useEffect(() => {
@@ -102,24 +105,6 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
   
   const sequenceForBackView = liveSequence || (isFlipped ? measureSequence : prevMeasureSequenceRef.current);
   const countInForBackView = isFlipped ? countInEnabled : prevCountInRef.current;
-
-
-  const { currentMeasureIndex: playingMeasureIndex, stepInMeasure: stepInPlayingMeasure } = useMemo(() => {
-    const sequenceToUse = isPlaying ? measureSequence : [];
-    if (globalCurrentStep === -1 || sequenceToUse.length === 0) {
-      return { currentMeasureIndex: -1, stepInMeasure: -1 };
-    }
-    let globalStepCounter = 0;
-    for (let i = 0; i < sequenceToUse.length; i++) {
-        const measure = sequenceToUse[i];
-        const measureLength = measure.pattern.length;
-        if (globalCurrentStep < globalStepCounter + measureLength) {
-            return { currentMeasureIndex: i, stepInMeasure: globalCurrentStep - globalStepCounter };
-        }
-        globalStepCounter += measureLength;
-    }
-    return { currentMeasureIndex: -1, stepInMeasure: -1 };
-  }, [globalCurrentStep, isPlaying, measureSequence]);
 
   useEffect(() => {
     // Follow the currently playing measure in the advanced view
@@ -182,7 +167,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
       pattern: generateDefaultPattern(4, 4),
     };
     const sequence = liveSequence || measureSequence;
-    onMeasureSequenceChange([...sequence, newMeasure]);
+    handleMeasureSequenceChange([...sequence, newMeasure]);
     setNewlyAddedMeasureId(newMeasure.id);
     setTimeout(() => setNewlyAddedMeasureId(null), 500); // Corresponds to animation duration
   };
@@ -191,20 +176,20 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
     if (props.disabled || selectedMeasureIndices.length === 0 || measureSequence.length <= 1) return;
     const sequence = liveSequence || measureSequence;
     const newSequence = sequence.filter((_, index) => !selectedMeasureIndices.includes(index));
-    onMeasureSequenceChange(newSequence);
+    handleMeasureSequenceChange(newSequence);
     onSetSelectedMeasureIndices([]);
   };
   
-  const handleDuplicateMeasure = () => {
+  const handleDuplicateClick = () => {
     if (props.disabled || singleSelectedMeasureIndex === null || measureSequence.length >= 40) return;
-    onDuplicateMeasure(singleSelectedMeasureIndex);
+    handleDuplicateMeasure(singleSelectedMeasureIndex);
     onSetSelectedMeasureIndices([singleSelectedMeasureIndex + 1]);
   };
 
   const handleRandomizeClick = () => {
     if (isRandomizing || props.disabled) return;
     setIsRandomizing(true);
-    onRandomizeSelectedMeasures();
+    handleRandomizeSelectedMeasures();
     setTimeout(() => setIsRandomizing(false), 500); // Animation duration
   }
 
@@ -236,7 +221,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
       setLiveSequence(null);
       return;
     }
-    onMeasureSequenceChange(liveSequence); // Commit the change
+    handleMeasureSequenceChange(liveSequence); // Commit the change
     const newIndex = liveSequence.findIndex(m => m.id === draggedItemId);
     if (newIndex !== -1) { onSetSelectedMeasureIndices([newIndex]); }
     setDraggedItemId(null);
@@ -248,7 +233,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
     const sequence = liveSequence || measureSequence;
     const newSequence = [...sequence];
     newSequence[singleSelectedMeasureIndex] = { ...newSequence[singleSelectedMeasureIndex], pattern: newPattern };
-    onMeasureSequenceChange(newSequence);
+    handleMeasureSequenceChange(newSequence);
   };
   
   const stepForGrid = (singleSelectedMeasureIndex === playingMeasureIndex) ? stepInPlayingMeasure : -1;
@@ -346,8 +331,9 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
                     beats={displayBeats}
                     subdivisions={displaySubdivisions}
                     pattern={displayPattern}
-                    onPatternChange={onPatternChange}
-                    currentStep={currentStep}
+                    onPatternChange={handlePatternChange}
+                    // FIX: Use `isFlipped` prop instead of undefined `isAdvSequencerActive`
+                    currentStep={isFlipped ? -1 : stepInMeasure}
                     isPlaying={isPlaying}
                     disabled={props.disabled}
                     beatSoundId={beatSoundId}
@@ -358,8 +344,9 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
                     beats={displayBeats}
                     subdivisions={displaySubdivisions}
                     pattern={displayPattern}
-                    onPatternChange={onPatternChange}
-                    currentStep={currentStep}
+                    onPatternChange={handlePatternChange}
+                    // FIX: Use `isFlipped` prop instead of undefined `isAdvSequencerActive`
+                    currentStep={isFlipped ? -1 : stepInMeasure}
                     isPlaying={isPlaying}
                     disabled={props.disabled}
                     bpm={bpm}
@@ -369,7 +356,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
             )}
             <div className="mt-4 flex justify-between items-center pt-4 border-t border-white/10">
               <button
-                onClick={() => onSimpleViewChange(simpleView === 'grid' ? 'rings' : 'grid')}
+                onClick={() => updateSetting('simpleView', simpleView === 'grid' ? 'rings' : 'grid')}
                 className="flex items-center gap-1 bg-black/20 p-1 rounded-full cursor-pointer transition-colors hover:bg-black/40"
                 aria-label={`Switch to ${simpleView === 'grid' ? 'ring' : 'grid'} view`}
                 aria-live="polite"
@@ -401,7 +388,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
                 <div className="flex-shrink-0 pl-2 flex items-center gap-2">
                   {isEditMode && (
                     <>
-                      <button onClick={handleDuplicateMeasure} disabled={measureSequence.length >= 40 || selectedMeasureIndices.length !== 1} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Duplicate selected measure"><DuplicateIcon /></button>
+                      <button onClick={handleDuplicateClick} disabled={measureSequence.length >= 40 || selectedMeasureIndices.length !== 1} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Duplicate selected measure"><DuplicateIcon /></button>
                       <button onClick={handleDeleteMeasure} disabled={selectedMeasureIndices.length === 0 || measureSequence.length <= 1} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/20 text-gray-300 hover:bg-red-600/80 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Delete selected measures"><TrashIcon /></button>
                     </>
                   )}
@@ -420,7 +407,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
               
               <div className={`flex items-center gap-2 transition-opacity ${isEditMode ? 'opacity-50 pointer-events-none' : ''}`}>
                   <button 
-                    onClick={() => onCountInChange(!countInEnabled)} 
+                    onClick={() => handleCountInChange(!countInEnabled)} 
                     disabled={isEditMode} 
                     className={`flex-1 h-11 flex items-center justify-center font-bold rounded-2xl transition-all duration-300 uppercase tracking-wider text-sm ${countInEnabled ? 'bg-gray-400 text-black' : 'bg-black/20 text-white/70'}`} 
                     aria-pressed={countInEnabled}
@@ -428,7 +415,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
                     Count In
                   </button>
                   <button 
-                    onClick={() => onLoopChange(!loopEnabled)} 
+                    onClick={() => handleLoopChange(!loopEnabled)} 
                     disabled={isEditMode} 
                     className={`flex-1 h-11 flex items-center justify-center font-bold rounded-2xl transition-all duration-300 uppercase tracking-wider text-sm ${loopEnabled ? 'bg-gray-400 text-black' : 'bg-black/20 text-white/70'}`} 
                     aria-pressed={loopEnabled}

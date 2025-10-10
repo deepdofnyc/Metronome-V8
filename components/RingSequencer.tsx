@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { playStepPreview } from '../services/audioPreviews';
 
@@ -256,25 +254,43 @@ const RingSequencer: React.FC<RingSequencerProps> = ({ beats, subdivisions, patt
                         const isPulsing = isPlaying && i === activeBeatIndex;
                         const isPressed = manuallyPressedSteps.has(key);
 
-                        let color = 'rgba(255, 255, 255, 0.1)';
-                        if (state === 3) color = 'var(--strong-beat-accent)';
-                        else if (state === 2) color = 'var(--primary-accent)';
-                        else if (state === 1) color = 'var(--secondary-accent)';
+                        const isOff = state === 0;
+                        let fillColor = 'transparent';
+                        let strokeColor = 'transparent';
+                        let strokeWidth = 0;
+
+                        if (isOff) {
+                            strokeColor = 'rgba(255, 255, 255, 0.1)';
+                            strokeWidth = 2;
+                        } else {
+                            switch (state) {
+                                case 3: fillColor = 'var(--strong-beat-accent)'; break;
+                                case 2: fillColor = 'var(--primary-accent)'; break;
+                                case 1: fillColor = 'var(--secondary-accent)'; break;
+                            }
+                        }
 
                         if (isPulsing) {
-                            color = state > 0 ? 'white' : 'rgba(255, 255, 255, 0.7)';
+                            if (isOff) {
+                                fillColor = 'transparent';
+                                strokeColor = 'rgba(255, 255, 255, 0.7)';
+                            } else {
+                                fillColor = 'white';
+                            }
                         }
                         
                         const pressTransition = isPressed 
                             ? 'transform 0.1s ease-in'
                             : 'transform 1.2s cubic-bezier(0.19, 1, 0.22, 1)';
-                        const playbackTransition = 'fill 0.2s ease-out';
+                        const playbackTransition = 'fill 0.2s ease-out, stroke 0.2s ease-out';
 
                         return (
                             <path
                                 key={key}
                                 d={describeSegment(100, 100, 95, 80, startAngle, endAngle, 1.5, 0)}
-                                fill={color}
+                                fill={fillColor}
+                                stroke={strokeColor}
+                                strokeWidth={strokeWidth}
                                 className={`${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                                 onClick={() => handleBeatClick(i)}
                                 onMouseDown={() => handlePressStart(key)}
@@ -302,29 +318,44 @@ const RingSequencer: React.FC<RingSequencerProps> = ({ beats, subdivisions, patt
                         const isPressed = manuallyPressedSteps.has(key);
 
                         const state = pattern[stepIndex];
-                        let color;
+                        
+                        const isOff = state === 0;
+                        let fillColor = 'transparent';
+                        let strokeColor = 'transparent';
+                        let strokeWidth = 0;
 
-                        switch (state) {
-                            case 3: color = 'var(--strong-beat-accent)'; break;
-                            case 2: color = 'var(--primary-accent)'; break;
-                            case 1: color = 'var(--secondary-accent)'; break;
-                            default: color = 'rgba(255, 255, 255, 0.1)';
+                        if (isOff) {
+                            strokeColor = 'rgba(255, 255, 255, 0.1)';
+                            strokeWidth = 2;
+                        } else {
+                            switch (state) {
+                                case 3: fillColor = 'var(--strong-beat-accent)'; break;
+                                case 2: fillColor = 'var(--primary-accent)'; break;
+                                case 1: fillColor = 'var(--secondary-accent)'; break;
+                            }
                         }
                         
                         if (isPulsing) {
-                            color = state > 0 ? 'white' : 'rgba(255, 255, 255, 0.7)';
+                            if (isOff) {
+                                fillColor = 'transparent';
+                                strokeColor = 'rgba(255, 255, 255, 0.7)';
+                            } else {
+                                fillColor = 'white';
+                            }
                         }
 
                         const pressTransition = isPressed 
                             ? 'transform 0.1s ease-in'
                             : 'transform 1.2s cubic-bezier(0.19, 1, 0.22, 1)';
-                        const playbackTransition = 'fill 0.2s ease-out';
+                        const playbackTransition = 'fill 0.2s ease-out, stroke 0.2s ease-out';
 
                         return (
                             <path
                                 key={key}
                                 d={describeSegment(100, 100, 75, 60, startAngle, endAngle, 2, 0)}
-                                fill={color}
+                                fill={fillColor}
+                                stroke={strokeColor}
+                                strokeWidth={strokeWidth}
                                 className={`${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                                 onClick={() => handleSubdivisionStepClick(stepIndex)}
                                 onMouseDown={() => handlePressStart(key)}

@@ -1,34 +1,27 @@
 
+
 import React from 'react';
 import { type Sound } from '../types';
 import { playStepPreview } from '../services/audioPreviews';
+import { useMetronome } from '../contexts/MetronomeContext';
+import { SOUND_OPTIONS } from '../constants';
 
-interface SoundSelectorProps {
-  soundOptions: Sound[];
-  currentBeatSoundId: string;
-  currentSubdivisionSoundId: string;
-  onBeatSoundSelect: (id: string) => void;
-  onSubdivisionSoundSelect: (id: string) => void;
-}
+interface SoundSelectorProps {}
 
-const SoundSelector: React.FC<SoundSelectorProps> = ({
-  soundOptions,
-  currentBeatSoundId,
-  currentSubdivisionSoundId,
-  onBeatSoundSelect,
-  onSubdivisionSoundSelect,
-}) => {
-  
+const SoundSelector: React.FC<SoundSelectorProps> = () => {
+  const { settingsForDisplay, updateSetting } = useMetronome();
+  const { beatSoundId: currentBeatSoundId, subdivisionSoundId: currentSubdivisionSoundId } = settingsForDisplay;
+
   const handleBeatSoundSelect = (soundId: string) => {
     // A 'beat' preview should be distinct, so we use the strong beat sound (type 3).
     playStepPreview(soundId, 3);
-    onBeatSoundSelect(soundId);
+    updateSetting('beatSoundId', soundId);
   };
   
   const handleSubdivisionSoundSelect = (soundId: string) => {
     // A 'subdivision' preview uses the standard subdivision sound (type 1).
     playStepPreview(soundId, 1);
-    onSubdivisionSoundSelect(soundId);
+    updateSetting('subdivisionSoundId', soundId);
   };
 
   return (
@@ -38,7 +31,7 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({
         <div className="flex-1">
           <h4 className="text-center text-white/80 mb-2 font-medium tracking-wide">Beat</h4>
           <div className="flex flex-col gap-2 bg-black/20 p-1.5 rounded-3xl">
-            {soundOptions.map(sound => (
+            {SOUND_OPTIONS.map(sound => (
               <button
                 key={sound.id}
                 onClick={() => handleBeatSoundSelect(sound.id)}
@@ -59,7 +52,7 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({
         <div className="flex-1">
           <h4 className="text-center text-white/80 mb-2 font-medium tracking-wide">Subdivision</h4>
           <div className="flex flex-col gap-2 bg-black/20 p-1.5 rounded-3xl">
-            {soundOptions.map(sound => (
+            {SOUND_OPTIONS.map(sound => (
               <button
                 key={sound.id}
                 onClick={() => handleSubdivisionSoundSelect(sound.id)}
