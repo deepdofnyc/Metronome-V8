@@ -442,22 +442,6 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
                   >
                     Loop
                   </button>
-                  <button 
-                      onClick={handleRandomizeClick} 
-                      disabled={isEditMode || selectedMeasureIndices.length === 0}
-                      className={`
-                          h-11 flex-shrink-0 flex items-center justify-center rounded-2xl bg-black/20 text-white/70 
-                          transition-all duration-300 ease-in-out overflow-hidden
-                          hover:enabled:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed
-                          ${selectedMeasureIndices.length > 0 ? 'w-12 px-2' : 'w-0 px-0 opacity-0'}
-                      `}
-                      aria-label="Randomize selected measure(s)"
-                      tabIndex={selectedMeasureIndices.length > 0 ? 0 : -1}
-                  >
-                      <div className={isRandomizing ? 'animate-spin-dice' : ''}>
-                          <DiceIcon className="h-6 w-6"/>
-                      </div>
-                  </button>
               </div>
               
               <div className={`my-4 border-t border-white/10 transition-opacity ${isEditMode ? 'opacity-50' : ''}`}></div>
@@ -476,7 +460,6 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
               {measureForGrid && !isEditMode && (
                 <div key={measureForGrid.id} className="mt-4 pt-4 border-t border-white/10 animate-panel">
                   <div className="flex justify-between items-center pb-4">
-                      <h5 className="text-sm uppercase tracking-wider text-[var(--text-secondary)]">Pattern Editor</h5>
                       <button
                           onClick={() => updateSetting('simpleView', simpleView === 'grid' ? 'rings' : 'grid')}
                           className="flex items-center gap-1 bg-black/20 p-1 rounded-full cursor-pointer transition-colors hover:bg-black/40"
@@ -485,6 +468,16 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
                       >
                           <div className={`p-1.5 rounded-full transition-colors duration-300 ${simpleView === 'grid' ? 'text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'}`} aria-hidden="true"><GridViewIcon /></div>
                           <div className={`p-1.5 rounded-full transition-colors duration-300 ${simpleView === 'rings' ? 'text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'}`} aria-hidden="true"><RingViewIcon /></div>
+                      </button>
+                      <button 
+                          onClick={handleRandomizeClick} 
+                          disabled={props.disabled}
+                          className="h-11 w-11 flex-shrink-0 flex items-center justify-center rounded-full bg-black/20 text-white/70 hover:enabled:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          aria-label="Randomize selected measure"
+                      >
+                          <div className={isRandomizing ? 'animate-spin-dice' : ''}>
+                              <DiceIcon className="h-6 w-6"/>
+                          </div>
                       </button>
                   </div>
                   {simpleView === 'grid' ? (
