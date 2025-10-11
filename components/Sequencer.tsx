@@ -475,17 +475,44 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
 
               {measureForGrid && !isEditMode && (
                 <div key={measureForGrid.id} className="mt-4 pt-4 border-t border-white/10 animate-panel">
-                  <StepGrid
-                    beats={measureForGrid.beats}
-                    subdivisions={measureForGrid.subdivisions}
-                    pattern={measureForGrid.pattern}
-                    onPatternChange={handleMeasurePatternChange}
-                    currentStep={stepForGrid}
-                    isPlaying={isPlaying}
-                    disabled={props.disabled || singleSelectedMeasureIndex === null}
-                    beatSoundId={beatSoundId}
-                    subdivisionSoundId={subdivisionSoundId}
-                  />
+                  <div className="flex justify-between items-center pb-4">
+                      <h5 className="text-sm uppercase tracking-wider text-[var(--text-secondary)]">Pattern Editor</h5>
+                      <button
+                          onClick={() => updateSetting('simpleView', simpleView === 'grid' ? 'rings' : 'grid')}
+                          className="flex items-center gap-1 bg-black/20 p-1 rounded-full cursor-pointer transition-colors hover:bg-black/40"
+                          aria-label={`Switch to ${simpleView === 'grid' ? 'ring' : 'grid'} view`}
+                          aria-live="polite"
+                      >
+                          <div className={`p-1.5 rounded-full transition-colors duration-300 ${simpleView === 'grid' ? 'text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'}`} aria-hidden="true"><GridViewIcon /></div>
+                          <div className={`p-1.5 rounded-full transition-colors duration-300 ${simpleView === 'rings' ? 'text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'}`} aria-hidden="true"><RingViewIcon /></div>
+                      </button>
+                  </div>
+                  {simpleView === 'grid' ? (
+                      <StepGrid
+                          beats={measureForGrid.beats}
+                          subdivisions={measureForGrid.subdivisions}
+                          pattern={measureForGrid.pattern}
+                          onPatternChange={handleMeasurePatternChange}
+                          currentStep={stepForGrid}
+                          isPlaying={isPlaying}
+                          disabled={props.disabled || singleSelectedMeasureIndex === null}
+                          beatSoundId={beatSoundId}
+                          subdivisionSoundId={subdivisionSoundId}
+                      />
+                  ) : (
+                      <RingSequencer
+                          beats={measureForGrid.beats}
+                          subdivisions={measureForGrid.subdivisions}
+                          pattern={measureForGrid.pattern}
+                          onPatternChange={handleMeasurePatternChange}
+                          currentStep={stepForGrid}
+                          isPlaying={isPlaying}
+                          disabled={props.disabled || singleSelectedMeasureIndex === null}
+                          bpm={bpm}
+                          beatSoundId={beatSoundId}
+                          subdivisionSoundId={subdivisionSoundId}
+                      />
+                  )}
                 </div>
               )}
             </div>

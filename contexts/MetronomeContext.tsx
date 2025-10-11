@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react';
 import { type MetronomeSettings, type PlaylistItem, type Setlist, type Measure } from '../types';
 import { useMetronomeEngine, useSetlist, useQuickSongs } from '../hooks';
@@ -534,7 +533,10 @@ export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children 
     }, []);
 
     const handleRandomize = useCallback(() => {
-        if (isPlaying) togglePlay();
+        const wasPlaying = isPlaying;
+        if (wasPlaying) {
+            engineTogglePlay(); // Stop playback
+        }
         
         const currentBpm = settings.bpm;
         let subChances: number[];
@@ -551,7 +553,6 @@ export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children 
             randomSubdivisions = Math.floor(64 / randomBeats) || 1;
         }
 
-        const randomSwing = randomSubdivisions === 3 ? 0 : (Math.random() < 0.4 ? Math.random() * 0.6 + 0.1 : 0);
         const randomPattern = generateRandomPattern(randomBeats, randomSubdivisions);
         
         const randomMeasure: Measure = {
@@ -561,59 +562,38 @@ export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children 
             pattern: randomPattern,
         };
         
-        // FIX: Explicitly type randomSoundSettings to ensure `simpleView` is not widened to `string`.
-        const randomSoundSettings: {
-            beatSoundId: string;
-            subdivisionSoundId: string;
-            accentVolume: number;
-            beatVolume: number;
-            swing: number;
-            simpleView: 'grid' | 'rings';
-        } = {
-            beatSoundId: SOUND_OPTIONS[Math.floor(Math.random() * SOUND_OPTIONS.length)].id,
-            subdivisionSoundId: SOUND_OPTIONS[Math.floor(Math.random() * SOUND_OPTIONS.length)].id,
-            accentVolume: Math.random() * 0.5 + 0.5,
-            beatVolume: Math.random() * 0.5 + 0.25,
-            swing: randomSwing,
-            simpleView: Math.random() < 0.5 ? 'grid' : 'rings',
-        };
+        setSettings(prev => ({
+            ...prev,
+            measureSequence: [randomMeasure],
+            countIn: false,
+            isAdvanced: false,
+        }));
+        
+        setIsAdvSequencerActive(false);
+        setSelectedMeasureIndices([]);
 
         if (loadedSongInfo) {
-            // A setlist song is loaded. Modify its settings in place and mark as dirty.
-            setSettings(prev => ({
-                ...prev, // Keeps BPM, masterVolume, loop, etc. from the loaded song
-                ...randomSoundSettings,
-                measureSequence: [randomMeasure],
-                countIn: false,
-                isAdvanced: false,
-            }));
-            setIsAdvSequencerActive(false);
-            setLoadedQuickSongIndex(null);
-            setSelectedMeasureIndices([]);
             setIsDirty(true);
+            setLoadedQuickSongIndex(null);
         } else {
-            // No setlist song is loaded (it's a new session or a quick song is active).
-            // Create a new configuration from scratch, preserving only BPM and master volume.
-            const newSettings: MetronomeSettings = {
-                bpm: settings.bpm,
-                masterVolume: settings.masterVolume,
-                ...randomSoundSettings,
-                measureSequence: [randomMeasure],
-                countIn: false,
-                loop: true,
-                isAdvanced: false,
-            };
-            setSettings(newSettings);
-            setIsAdvSequencerActive(false);
+            setIsDirty(false);
             setLoadedSongInfo(null);
             setLoadedQuickSongIndex(null);
-            setSelectedMeasureIndices([]);
-            setIsDirty(false);
         }
-    }, [isPlaying, togglePlay, settings.bpm, settings.masterVolume, loadedSongInfo]);
+
+        if (wasPlaying) {
+            setTimeout(() => {
+                engineTogglePlay(0); // Restart from beginning
+            }, 500);
+        }
+    }, [isPlaying, engineTogglePlay, settings.bpm, loadedSongInfo]);
 
     const handleRandomizeSelectedMeasures = useCallback(() => {
-        if (isPlaying) togglePlay();
+        const wasPlaying = isPlaying;
+        if (wasPlaying) {
+            engineTogglePlay(); // Stop playback
+        }
+
         if (selectedMeasureIndices.length === 0) return;
         if (loadedSongInfo) setIsDirty(true);
         if (loadedQuickSongIndex !== null) setLoadedQuickSongIndex(null);
@@ -621,32 +601,42 @@ export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children 
             const newSequence = [...prev.measureSequence];
             selectedMeasureIndices.forEach(index => {
                 if (index < newSequence.length) {
-                    if (prev.countIn && index === 0) return;
+                    if (prev.countIn && index === 0) return; // Don't randomize count-in measure
+                    
                     const beatChances = [2, 3, 4, 4, 4, 4, 4, 5, 6, 7, 8];
                     const subChances = [1, 2, 3, 4, 4, 6, 8].filter(s => s <= 16);
+                    
                     const randomBeats = beatChances[Math.floor(Math.random() * beatChances.length)];
                     let randomSubdivisions = subChances[Math.floor(Math.random() * subChances.length)];
                     if (randomBeats * randomSubdivisions > 64) {
                         randomSubdivisions = Math.floor(64 / randomBeats) || 1;
                     }
-                    const randomSwing = randomSubdivisions === 3 ? 0 : (Math.random() < 0.4 ? Math.random() * 0.6 + 0.1 : 0);
+                    
                     const randomPattern = generateRandomPattern(randomBeats, randomSubdivisions);
+                    
                     const randomizedMeasure: Measure = {
-                        ...newSequence[index],
-                        beats: randomBeats, subdivisions: randomSubdivisions, pattern: randomPattern,
-                        swing: Math.random() < 0.5 ? randomSwing : undefined,
-                        bpm: Math.random() < 0.3 ? Math.floor(Math.random() * (180 - 60 + 1)) + 60 : undefined,
-                        beatSoundId: Math.random() < 0.3 ? SOUND_OPTIONS[Math.floor(Math.random() * SOUND_OPTIONS.length)].id : undefined,
-                        subdivisionSoundId: Math.random() < 0.3 ? SOUND_OPTIONS[Math.floor(Math.random() * SOUND_OPTIONS.length)].id : undefined,
-                        accentVolume: Math.random() < 0.3 ? Math.random() * 0.5 + 0.5 : undefined,
-                        beatVolume: Math.random() < 0.3 ? Math.random() * 0.5 + 0.25 : undefined,
+                        ...newSequence[index], // Preserve other measure-specific settings (BPM, sound, etc)
+                        beats: randomBeats, 
+                        subdivisions: randomSubdivisions, 
+                        pattern: randomPattern,
                     };
                     newSequence[index] = randomizedMeasure;
                 }
             });
             return { ...prev, measureSequence: newSequence };
         });
-    }, [isPlaying, togglePlay, selectedMeasureIndices, loadedSongInfo, loadedQuickSongIndex]);
+
+        if (wasPlaying) {
+            setTimeout(() => {
+                if (selectedMeasureIndices.length > 0) {
+                    const startMeasureIndex = Math.min(...selectedMeasureIndices);
+                    engineTogglePlay(startMeasureIndex);
+                } else {
+                    engineTogglePlay(0); // Fallback, though should not be reached
+                }
+            }, 500);
+        }
+    }, [isPlaying, engineTogglePlay, selectedMeasureIndices, loadedSongInfo, loadedQuickSongIndex]);
 
     const setlistActions = useMemo(() => ({
         saveChanges: () => {
