@@ -52,6 +52,15 @@ export class AudioEngine {
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       await this.audioContext.resume();
 
+      // WARM-UP: This is critical. Play a completely silent sound.
+      // This forces the browser's audio hardware to wake up and initializes its clock,
+      // preventing the first actual metronome click from being dropped or delayed.
+      const buffer = this.audioContext.createBuffer(1, 1, 22050);
+      const source = this.audioContext.createBufferSource();
+      source.buffer = buffer;
+      source.connect(this.audioContext.destination);
+      source.start(); // Use start() without arguments to play immediately.
+
       // Create the gain node chain: Oscillator -> Envelope -> Accent/Beat Gain -> Master Gain -> Destination
       this.masterGain = this.audioContext.createGain();
       this.masterGain.gain.value = this.masterVolume;
@@ -89,6 +98,23 @@ export class AudioEngine {
       };
     }
   }
+  
+  /** Calculates the duration of a single step, applying swing if necessary. */
+  private getStepDuration(measure: Measure, stepInMeasure: number): number {
+    const baseStepDuration = (60.0 / this.bpm) / measure.subdivisions;
+    if (this.swing <= 0 || measure.subdivisions < 2) {
+        return baseStepDuration;
+    }
+
+    const subStepInBeat = stepInMeasure % measure.subdivisions;
+    const swingFactor = this.swing / 2.0;
+    
+    if (subStepInBeat % 2 === 0) { // On-beat subdivisions are longer
+        return baseStepDuration * (1 + swingFactor);
+    } else { // Off-beat subdivisions are shorter
+        return baseStepDuration * (1 - swingFactor);
+    }
+  }
 
   /**
    * The core scheduling function. It's called by the Web Worker's 'tick'.
@@ -120,19 +146,7 @@ export class AudioEngine {
       }
       
       // Calculate the duration of the current step, applying swing if necessary.
-      const stepDuration = (60.0 / this.bpm) / currentMeasure.subdivisions;
-      let timeToNextStep = stepDuration;
-
-      if (this.swing > 0 && currentMeasure.subdivisions >= 2) {
-        const subStepInBeat = this.currentStepInMeasure % currentMeasure.subdivisions;
-        const swingFactor = this.swing / 2.0;
-        
-        if (subStepInBeat % 2 === 0) { // On-beat subdivisions are longer
-          timeToNextStep = stepDuration * (1 + swingFactor);
-        } else { // Off-beat subdivisions are shorter
-          timeToNextStep = stepDuration * (1 - swingFactor);
-        }
-      }
+      const timeToNextStep = this.getStepDuration(currentMeasure, this.currentStepInMeasure);
       
       this.nextNoteTime += timeToNextStep;
       this.globalStep++;
@@ -250,9 +264,45 @@ export class AudioEngine {
     }
     this.globalStep = newGlobalStep;
     
-    this.nextNoteTime = this.audioContext.currentTime + 0.05; // Add a small buffer
-    
     this.applyCurrentMeasureSettings();
+
+    // --- NEW STRATEGY ---
+    // Manually schedule the first beat with a safe buffer to ensure it plays,
+    // then let the worker's scheduler take over for subsequent beats. This avoids
+    // the race condition where the audio clock hasn't started when the first note is scheduled.
+    const now = this.audioContext.currentTime;
+    const firstNoteTime = now + 0.05; // 50ms buffer for reliability
+
+    // 1. Schedule the first note's audio.
+    this.scheduleNote(this.currentMeasureIndex, this.currentStepInMeasure, firstNoteTime);
+
+    // 2. Schedule the first note's visual callback.
+    const stepForCallback = this.globalStep;
+    if (this.onStepCallback) {
+        const delay = (firstNoteTime - now) * 1000;
+        setTimeout(() => {
+            if (this.isRunning && this.onStepCallback) {
+                this.onStepCallback(stepForCallback);
+            }
+        }, delay);
+    }
+    
+    // 3. Calculate when the *second* note should occur.
+    const currentMeasure = this.measureSequence[this.currentMeasureIndex];
+    const timeToNextStep = this.getStepDuration(currentMeasure, this.currentStepInMeasure);
+
+    // 4. Advance the state to point to the second note.
+    this.globalStep++;
+    this.currentStepInMeasure++;
+    if (this.currentStepInMeasure >= currentMeasure.pattern.length) {
+        // This will reset step to 0 and advance measure index.
+        this.advanceMeasure();
+    }
+
+    // 5. Set the nextNoteTime for the scheduler loop to pick up from.
+    this.nextNoteTime = firstNoteTime + timeToNextStep;
+    
+    // 6. Start the worker.
     this.schedulerWorker.postMessage({ command: 'start' });
   }
 
