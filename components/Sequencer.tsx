@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { type Measure } from '../types';
 import { generateDefaultPattern } from '../utils';
@@ -19,7 +16,8 @@ import {
     DuplicateIcon,
     CheckIcon,
     GripIcon,
-    DiceIcon
+    DiceIcon,
+    ChevronLeftIcon
 } from './Icons';
 
 interface SequencerProps {
@@ -146,13 +144,8 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
   const handleSelectMeasureForEdit = (index: number) => {
     if (props.disabled || draggedItemId) return;
     
-    if (isEditMode) { // Multi-select in edit mode
-      onSetSelectedMeasureIndices(prev => {
-        const selected = new Set(prev);
-        if (selected.has(index)) selected.delete(index);
-        else selected.add(index);
-        return Array.from(selected);
-      });
+    if (isEditMode) { // Single-select in edit mode
+      onSetSelectedMeasureIndices([index]);
     } else { // Single-select (or deselect) outside edit mode
       onSetSelectedMeasureIndices(prev => (prev.length === 1 && prev[0] === index) ? [] : [index]);
     }
@@ -175,9 +168,21 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
   const handleDeleteMeasure = () => {
     if (props.disabled || selectedMeasureIndices.length === 0 || measureSequence.length <= 1) return;
     const sequence = liveSequence || measureSequence;
-    const newSequence = sequence.filter((_, index) => !selectedMeasureIndices.includes(index));
+
+    // With single-select in edit mode, we operate on the first (and only) selected index
+    const indexToDelete = selectedMeasureIndices[0];
+
+    const newSequence = sequence.filter((_, index) => index !== indexToDelete);
     handleMeasureSequenceChange(newSequence);
-    onSetSelectedMeasureIndices([]);
+
+    // After deleting, select the next logical measure to allow for sequential deletions.
+    if (newSequence.length > 0) {
+        const newIndexToSelect = Math.min(indexToDelete, newSequence.length - 1);
+        onSetSelectedMeasureIndices([newIndexToSelect]);
+    } else {
+        // This case is unlikely due to the length check, but is here for safety.
+        onSetSelectedMeasureIndices([]);
+    }
   };
   
   const handleDuplicateClick = () => {
@@ -240,7 +245,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
   
   const getHeaderText = () => {
     if (isEditMode) {
-      if (selectedMeasureIndices.length > 0) return `${selectedMeasureIndices.length} Measures Selected`;
+      if (selectedMeasureIndices.length > 0) return `${selectedMeasureIndices.length} Measure Selected`;
       return 'Edit Sequence';
     }
     if (singleSelectedMeasureIndex !== null) {
@@ -250,7 +255,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
       if (isPlaying) return `Playing ${measureLabel}`;
       return measureLabel;
     }
-    return 'Measures';
+    return 'Adv. Sequencer';
   };
 
   const shouldIsolateCountIn = countInForBackView && sequenceForBackView.length > 4;
@@ -326,6 +331,27 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
         {/* FRONT FACE: Simple Sequencer */}
         <div className="front" id="sequencer-front" aria-hidden={isFlipped}>
           <div ref={frontContentRef} className="flex flex-col w-full">
+            <div className="flex justify-between items-center pb-4 mb-4 border-b border-white/10">
+              <button
+                onClick={() => updateSetting('simpleView', simpleView === 'grid' ? 'rings' : 'grid')}
+                className="flex items-center gap-1 bg-black/20 p-1 rounded-full cursor-pointer transition-colors hover:bg-black/40"
+                aria-label={`Switch to ${simpleView === 'grid' ? 'ring' : 'grid'} view`}
+                aria-live="polite"
+              >
+                <div className={`p-1.5 rounded-full transition-colors duration-300 ${simpleView === 'grid' ? 'text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'}`} aria-hidden="true"><GridViewIcon /></div>
+                <div className={`p-1.5 rounded-full transition-colors duration-300 ${simpleView === 'rings' ? 'text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'}`} aria-hidden="true"><RingViewIcon /></div>
+              </button>
+              <button
+                onClick={() => onFlip(true)}
+                className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors py-2"
+                aria-controls="sequencer-back"
+                aria-expanded="false"
+              >
+                <AdvSequencerIcon />
+                Adv. Sequencer
+              </button>
+            </div>
+
             {simpleView === 'grid' ? (
                 <StepGrid 
                     beats={displayBeats}
@@ -352,52 +378,48 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
                     subdivisionSoundId={subdivisionSoundId}
                 />
             )}
-            <div className="mt-4 flex justify-between items-center pt-4 border-t border-white/10">
-              <button
-                onClick={() => updateSetting('simpleView', simpleView === 'grid' ? 'rings' : 'grid')}
-                className="flex items-center gap-1 bg-black/20 p-1 rounded-full cursor-pointer transition-colors hover:bg-black/40"
-                aria-label={`Switch to ${simpleView === 'grid' ? 'ring' : 'grid'} view`}
-                aria-live="polite"
-              >
-                <div className={`p-1.5 rounded-full transition-colors duration-300 ${simpleView === 'grid' ? 'text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'}`} aria-hidden="true"><GridViewIcon /></div>
-                <div className={`p-1.5 rounded-full transition-colors duration-300 ${simpleView === 'rings' ? 'text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'}`} aria-hidden="true"><RingViewIcon /></div>
-              </button>
-              <button
-                onClick={() => onFlip(true)}
-                className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors py-2"
-                aria-controls="sequencer-back"
-                aria-expanded="false"
-              >
-                <AdvSequencerIcon />
-                Adv. Sequencer
-              </button>
-            </div>
           </div>
         </div>
         {/* BACK FACE: Advanced Sequencer */}
         <div className="back" id="sequencer-back" aria-hidden={!isFlipped}>
           <div ref={backContentRef} className="flex flex-col w-full">
              <div className="flex-grow flex flex-col">
-              <div className="flex justify-between items-center mb-4 h-12">
-                <h4 className="flex flex-1 min-w-0 items-center gap-2 text-left text-sm uppercase tracking-wider text-[var(--text-secondary)]">
-                    <SequenceIcon />
-                    <span className="truncate">{getHeaderText()}</span>
-                </h4>
-                <div className="flex-shrink-0 pl-2 flex items-center gap-2">
-                  {isEditMode && (
-                    <>
-                      <button onClick={handleDuplicateClick} disabled={measureSequence.length >= 40 || selectedMeasureIndices.length !== 1} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Duplicate selected measure"><DuplicateIcon /></button>
-                      <button onClick={handleDeleteMeasure} disabled={selectedMeasureIndices.length === 0 || measureSequence.length <= 1} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/20 text-gray-300 hover:bg-red-600/80 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Delete selected measures"><TrashIcon /></button>
-                    </>
-                  )}
+              <div className="flex justify-between items-stretch h-[60px] -my-[10px]">
+                <div className="flex flex-1 items-center gap-2 min-w-0">
                   <button
-                    onClick={() => onEditModeChange(!isEditMode)}
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white transition-colors"
-                    aria-label={isEditMode ? "Done editing" : "Enter edit mode"}
+                    onClick={() => { onFlip(false); onSetSelectedMeasureIndices([]); onEditModeChange(false); }}
+                    className="flex items-center text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-2 -ml-2"
+                    aria-controls="sequencer-front"
+                    aria-expanded="true"
                   >
-                    {isEditMode ? <CheckIcon /> : <EditIcon />}
+                    <ChevronLeftIcon />
                   </button>
-                  <button onClick={handleAddMeasure} disabled={props.disabled || measureSequence.length >= 40} className="flex items-center justify-center w-10 h-10 rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Add measure"><PlusIcon /></button>
+                  <h4 className="min-w-0 text-sm uppercase tracking-wider text-[var(--text-secondary)]">
+                      <span className="truncate">{getHeaderText()}</span>
+                  </h4>
+                </div>
+                <div className="flex items-stretch flex-shrink-0">
+                    {isEditMode && (
+                        <>
+                            <div className="flex items-center justify-center px-1">
+                                <button onClick={handleDuplicateClick} disabled={measureSequence.length >= 40 || selectedMeasureIndices.length !== 1} className="p-2 rounded-full bg-black/20 text-gray-300 hover:bg-white/20 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Duplicate selected measure"><DuplicateIcon /></button>
+                            </div>
+                            <div className="flex items-center justify-center px-1">
+                                <button onClick={handleDeleteMeasure} disabled={selectedMeasureIndices.length === 0 || measureSequence.length <= 1} className="p-2 rounded-full bg-black/20 text-gray-300 hover:bg-red-600/80 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Delete selected measures"><TrashIcon /></button>
+                            </div>
+                            <div className="w-px h-6 bg-[var(--container-border)] opacity-50 my-auto mx-2"></div>
+                        </>
+                    )}
+                    <button onClick={() => onEditModeChange(!isEditMode)} className="flex items-center justify-center px-2 rounded-lg hover:bg-white/5 transition-colors" aria-label={isEditMode ? "Done editing" : "Enter edit mode"}>
+                        <div className={`p-2 rounded-full pointer-events-none transition-colors ${isEditMode ? 'bg-blue-500 text-white' : 'text-gray-300 bg-white/10'}`}>
+                            {isEditMode ? <CheckIcon /> : <EditIcon />}
+                        </div>
+                    </button>
+                    <button onClick={handleAddMeasure} disabled={props.disabled || measureSequence.length >= 40} className="flex items-center justify-center px-2 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Add measure">
+                        <div className="p-2 rounded-full pointer-events-none text-gray-300 bg-white/10">
+                            <PlusIcon />
+                        </div>
+                    </button>
                 </div>
               </div>
 
@@ -466,16 +488,6 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
                   />
                 </div>
               )}
-            </div>
-            <div className="mt-4 flex justify-center pt-4 border-t border-white/10">
-              <button
-                onClick={() => { onFlip(false); onSetSelectedMeasureIndices([]); onEditModeChange(false); }}
-                className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors py-2"
-                aria-controls="sequencer-front"
-                aria-expanded="true"
-              >
-                Back to Simple View
-              </button>
             </div>
           </div>
         </div>

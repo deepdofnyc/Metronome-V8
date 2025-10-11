@@ -389,7 +389,8 @@ export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children 
                   countInMeasure,
                   firstMeasure,
                   { ...JSON.parse(JSON.stringify(firstMeasure)), id: `m-${Date.now()}-2` },
-                  { ...JSON.parse(JSON.stringify(firstMeasure)), id: `m-${Date.now()}-3` }
+                  { ...JSON.parse(JSON.stringify(firstMeasure)), id: `m-${Date.now()}-3` },
+                  { ...JSON.parse(JSON.stringify(firstMeasure)), id: `m-${Date.now()}-4` }
                 ];
                 newCountIn = true;
               }
