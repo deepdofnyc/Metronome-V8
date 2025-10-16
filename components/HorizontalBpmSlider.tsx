@@ -1,5 +1,3 @@
-
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { MIN_BPM, MAX_BPM } from '../constants';
 import { useMetronome } from '../contexts/MetronomeContext';
@@ -330,7 +328,7 @@ const BpmControl: React.FC<BpmControlProps> = ({
     "w-full bg-[var(--container-bg)] backdrop-blur-lg rounded-3xl flex items-center justify-center select-none relative overflow-hidden",
     isBeating ? "bpm-container-pulse" : "bpm-container-base",
     "transition-all duration-500 ease-in-out",
-    disabled ? '' : (showSlider && (isDragging ? 'cursor-grabbing' : 'cursor-grab')),
+    disabled ? '' : (showSlider && (isDragging ? 'cursor-grabbing' : 'cursor-grabbing')),
     isShrunk ? "h-[60px]" : "h-48",
   ].filter(Boolean).join(" ");
   
@@ -373,7 +371,7 @@ const BpmControl: React.FC<BpmControlProps> = ({
         </button>
 
         <div 
-            className="flex flex-col items-center justify-center text-center z-10 bpm-editor-area"
+            className={`flex flex-col text-center z-10 bpm-editor-area ${isShrunk ? 'h-full justify-center' : 'justify-center'}`}
             onMouseDown={handlePressStartForEdit}
             onMouseUp={handlePressEndForEdit}
             onMouseLeave={handlePressEndForEdit}
@@ -381,7 +379,7 @@ const BpmControl: React.FC<BpmControlProps> = ({
             onTouchEnd={handlePressEndForEdit}
             onTouchCancel={handlePressEndForEdit}
         >
-          <p className={`text-xs tracking-[0.2em] uppercase text-white/80 transition-all duration-300 ${(isShrunk) ? 'h-0 opacity-0' : 'h-4 opacity-100 mb-1'}`}>BPM</p>
+          <p className={`text-xs tracking-[0.2em] uppercase text-white/80 transition-all duration-300 ${isShrunk ? 'h-0 opacity-0' : 'h-4 opacity-100 mb-1'}`}>BPM</p>
           {isEditingBpm ? (
             <input
               ref={bpmInputRef}
@@ -403,7 +401,7 @@ const BpmControl: React.FC<BpmControlProps> = ({
           ) : (
             <span className={`font-mono font-bold text-white tabular-nums leading-none tracking-tighter transition-all duration-300 ${isShrunk ? 'text-5xl' : 'text-7xl'}`}>{bpm}</span>
           )}
-          {!isEditingBpm && showTapButton && <p className={`text-xs tracking-[0.2em] uppercase text-white/80 mt-1 transition-all duration-300 ${(isShrunk) ? 'h-0 opacity-0' : 'h-auto opacity-100'}`}>TAP TEMPO</p>}
+          {!isEditingBpm && showTapButton && <p className={`text-xs tracking-[0.2em] uppercase text-white/80 transition-all duration-300 ${isShrunk ? 'h-0 opacity-0' : 'h-auto opacity-100 mt-1'}`}>TAP TEMPO</p>}
         </div>
         
         <button

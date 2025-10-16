@@ -193,17 +193,17 @@ const AppContent: React.FC = () => {
                 max={appSettings.maxBpm}
               />
                         
-              <div className={`w-full flex items-stretch gap-2 h-[100px] ${isEditingSequence ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className={`w-full flex items-stretch h-[100px] transition-all duration-300 ease-in-out ${isEditingSequence ? 'opacity-50 pointer-events-none' : ''} ${!!activeSetlistId ? 'gap-0' : 'gap-2'}`}>
                   <div className={`relative flex-1 flex items-center justify-around bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl px-2 transition-all duration-300 h-full ${isRhythmSliderActive ? 'z-40' : ''}`}>
                       <CircularRhythmControl label="Beats" value={measureForDisplay.beats} min={1} max={16} onChange={(v) => handleSimpleRhythmChange('beats', v)} onInteractionStateChange={setIsRhythmSliderActive} accentColor='var(--strong-beat-accent)' />
                       <CircularRhythmControl label="SUBD." value={measureForDisplay.subdivisions} min={1} max={16} onChange={(v) => handleSimpleRhythmChange('subdivisions', v)} onInteractionStateChange={setIsRhythmSliderActive} accentColor='var(--secondary-accent)' />
                       <CircularRhythmControl label="Swing" value={Math.round(settingsForDisplay.swing * 100)} min={0} max={100} onChange={(v) => updateSetting('swing', v / 100)} onInteractionStateChange={setIsRhythmSliderActive} accentColor='var(--tertiary-accent)' />
                   </div>
-                  <div className="flex-none w-24">
+                  <div className={`flex-none transition-all duration-300 ease-in-out overflow-hidden ${!!activeSetlistId ? 'w-0' : 'w-24'}`}>
                       <button
                           onClick={togglePlay}
                           disabled={isEditingSequence || !!activeSetlistId}
-                          className={`w-full h-full flex items-center justify-center bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl transition-all duration-300 ease-in-out ${isPlaying ? 'bg-gray-400 text-black' : 'bg-white/20 hover:enabled:bg-white/30 text-white'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                          className={`w-full h-full flex items-center justify-center bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl transition-all duration-300 ease-in-out ${isPlaying ? 'bg-gray-400 text-black' : 'bg-white/20 hover:enabled:bg-white/30 text-white'} disabled:cursor-not-allowed ${!!activeSetlistId ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}`}
                           aria-label={isPlaying ? 'Pause' : 'Play'}
                       >
                           {isPlaying ? <PauseIcon /> : <PlayIcon />}
