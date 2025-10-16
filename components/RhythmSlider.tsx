@@ -144,7 +144,12 @@ const CircularRhythmControl: React.FC<CircularRhythmControlProps> = ({ label, va
       // Up/Right increases value, Down/Left decreases.
       const combinedDelta = totalDeltaX - totalDeltaY;
 
-      const sensitivity = 20; // Adjusted sensitivity for combined inputs
+      // Dynamically calculate sensitivity based on the slider's range.
+      // This ensures a consistent "feel" regardless of the min/max values.
+      const range = Math.max(1, max - min); // Avoid division by zero
+      const totalDragDistance = 300; // The desired pixel distance to cover the full range
+      const sensitivity = totalDragDistance / range;
+
       const valueChange = combinedDelta / sensitivity;
       const newValue = dragStartRef.current.initialValue + valueChange;
       const clampedValue = Math.round(Math.max(min, Math.min(max, newValue)));
@@ -220,7 +225,7 @@ const CircularRhythmControl: React.FC<CircularRhythmControlProps> = ({ label, va
         </div>
       )}
 
-      <div className="relative w-16 h-16 sm:w-20 sm:h-20">
+      <div className="relative w-20 h-20">
           <svg viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`} className="absolute inset-0 w-full h-full">
               {/* Background Track */}
               <path
@@ -240,12 +245,12 @@ const CircularRhythmControl: React.FC<CircularRhythmControlProps> = ({ label, va
                   className={pathClassName}
               />
           </svg>
-          <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 ${isPopupVisible ? 'opacity-0' : 'opacity-100'}`}>
-              <span className="text-2xl sm:text-3xl font-mono font-bold text-[var(--text-primary)] tabular-nums">{valueForDisplay}</span>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <span className="text-3xl font-mono font-bold text-[var(--text-primary)] tabular-nums">{valueForDisplay}</span>
           </div>
       </div>
 
-      <span className={`-mt-4 text-[11px] text-[var(--text-secondary)] uppercase tracking-wider transition-opacity duration-200 ${isPopupVisible ? 'opacity-0' : 'opacity-100'}`}>{label}</span>
+      <span className="-mt-4 text-[11px] text-[var(--text-secondary)] uppercase tracking-wider">{label}</span>
     </div>
   );
 };
