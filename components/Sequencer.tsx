@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { type Measure } from '../types';
 import { generateDefaultPattern } from '../utils';
@@ -325,7 +326,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
   };
 
 
-  const containerClasses = `w-full bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl p-[15px] transition-opacity duration-300 flip-container ${props.disabled ? 'opacity-50' : ''}`;
+  const containerClasses = `w-full bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl p-[15px] transition-opacity duration-300 flip-container overflow-hidden ${props.disabled ? 'opacity-50' : ''}`;
   
   return (
     <div className={containerClasses}>

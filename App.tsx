@@ -193,13 +193,13 @@ const AppContent: React.FC = () => {
                 max={appSettings.maxBpm}
               />
                         
-              <div className={`w-full flex items-stretch h-[100px] transition-all duration-300 ease-in-out ${isEditingSequence ? 'opacity-50 pointer-events-none' : ''} ${!!activeSetlistId ? 'gap-0' : 'gap-2'}`}>
-                  <div className={`relative flex-1 flex items-center justify-around bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl px-2 transition-all duration-300 h-full ${isRhythmSliderActive ? 'z-40' : ''}`}>
+              <div className={`w-full flex items-stretch h-[100px] transition-all duration-300 ease-in-out ${isEditingSequence ? 'opacity-50 pointer-events-none' : ''} ${!!activeSetlistId ? 'gap-0' : 'gap-2.5'}`}>
+                  <div className={`relative flex-1 flex items-center justify-center gap-2 bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl px-2 transition-all duration-300 h-full ${isRhythmSliderActive ? 'z-40' : ''}`}>
                       <CircularRhythmControl label="Beats" value={measureForDisplay.beats} min={1} max={16} onChange={(v) => handleSimpleRhythmChange('beats', v)} onInteractionStateChange={setIsRhythmSliderActive} accentColor='var(--strong-beat-accent)' />
                       <CircularRhythmControl label="SUBD." value={measureForDisplay.subdivisions} min={1} max={16} onChange={(v) => handleSimpleRhythmChange('subdivisions', v)} onInteractionStateChange={setIsRhythmSliderActive} accentColor='var(--secondary-accent)' />
                       <CircularRhythmControl label="Swing" value={Math.round(settingsForDisplay.swing * 100)} min={0} max={100} onChange={(v) => updateSetting('swing', v / 100)} onInteractionStateChange={setIsRhythmSliderActive} accentColor='var(--tertiary-accent)' />
                   </div>
-                  <div className={`flex-none transition-all duration-300 ease-in-out overflow-hidden ${!!activeSetlistId ? 'w-0' : 'w-24'}`}>
+                  <div className={`flex-none transition-all duration-300 ease-in-out overflow-hidden ${!!activeSetlistId ? 'w-0' : 'w-[90px]'}`}>
                       <button
                           onClick={togglePlay}
                           disabled={isEditingSequence || !!activeSetlistId}

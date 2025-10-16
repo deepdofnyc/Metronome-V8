@@ -181,7 +181,7 @@ const CircularRhythmControl: React.FC<CircularRhythmControlProps> = ({ label, va
     };
   }, [isInteracting, handleInteractionMove, handleInteractionEnd]);
   
-  const containerClasses = `relative flex flex-col items-center justify-center gap-0 flex-1 transition-opacity duration-300 ${isPopupVisible ? 'z-40' : ''} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`;
+  const containerClasses = `relative flex flex-col items-center justify-center gap-0 transition-opacity duration-300 ${isPopupVisible ? 'z-40' : ''} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`;
 
   // SVG Arc Calculations
   const START_ANGLE = 150; // Corresponds to 8 o'clock
@@ -246,7 +246,7 @@ const CircularRhythmControl: React.FC<CircularRhythmControlProps> = ({ label, va
               />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <span className="text-3xl font-mono font-bold text-[var(--text-primary)] tabular-nums">{valueForDisplay}</span>
+              <span className="text-2xl font-mono font-bold text-[var(--text-primary)] tabular-nums">{valueForDisplay}</span>
           </div>
       </div>
 

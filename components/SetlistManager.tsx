@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { type PlaylistItem, type Setlist, type MetronomeSettings } from '../types';
 import { useMetronome } from '../contexts/MetronomeContext';
@@ -13,6 +14,7 @@ import {
     EditIcon,
     DuplicateIcon,
     ChevronLeftIcon,
+    ChevronDownIcon,
     SequenceAdvancedIcon,
     SequenceGridIcon,
     SequenceRingIcon
@@ -285,6 +287,9 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
           <div className="flex items-stretch justify-between h-[60px] px-[15px]">
             <div role="button" onClick={onToggleVisibility} className="flex-grow flex items-center group cursor-pointer -ml-[15px] pl-[15px] mr-2">
               <h3 className="pl-2 text-left text-[var(--text-secondary)] uppercase text-sm tracking-widest font-bold select-none group-hover:text-[var(--text-primary)] transition-colors">Setlists</h3>
+              <div className={`ml-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-transform duration-300 ${isContainerOpen ? 'rotate-180' : 'rotate-0'}`}>
+                <ChevronDownIcon />
+              </div>
             </div>
             <div className="flex items-stretch flex-shrink-0">
               <div className="flex items-center">

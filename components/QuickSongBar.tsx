@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { type PlaylistItem, type MetronomeSettings } from '../types';
 import { useMetronome } from '../contexts/MetronomeContext';
-import { PlusIcon, DiceIcon } from './Icons';
+import { PlusIcon, DiceIcon, ResetIcon } from './Icons';
 
 interface QuickSongBarProps {
   disabled?: boolean;
@@ -163,6 +163,44 @@ const QuickSongSlot: React.FC<{
     );
 };
 
+const ResetSlot: React.FC<{ onReset: () => void; disabled?: boolean; }> = ({ onReset, disabled }) => {
+    const [isPressing, setIsPressing] = useState(false);
+
+    const handlePressStart = () => {
+        if (disabled) return;
+        setIsPressing(true);
+    };
+
+    const handlePressEnd = () => {
+        if (disabled) return;
+        setIsPressing(false);
+        onReset();
+    };
+
+    const handleCancel = () => {
+        setIsPressing(false);
+    };
+
+    const baseClasses = "w-16 h-16 rounded-full flex-shrink-0 flex flex-col items-center justify-center transition-all duration-200 relative select-none";
+    const pressClasses = isPressing ? 'scale-90' : 'scale-100';
+
+    return (
+        <button
+            onMouseDown={handlePressStart}
+            onMouseUp={handlePressEnd}
+            onMouseLeave={handleCancel}
+            onTouchStart={handlePressStart}
+            onTouchEnd={handlePressEnd}
+            onTouchCancel={handleCancel}
+            disabled={disabled}
+            className={`${baseClasses} ${pressClasses} bg-transparent hover:bg-black/20 text-white/70 hover:text-white`}
+            aria-label="Reset to default settings"
+        >
+            <ResetIcon className="h-7 w-7" />
+        </button>
+    );
+};
+
 const RandomizerSlot: React.FC<{ onRandomize: () => void; disabled?: boolean; }> = ({ onRandomize, disabled }) => {
     const [isPressing, setIsPressing] = useState(false);
     const [isSpinning, setIsSpinning] = useState(false);
@@ -215,6 +253,7 @@ const QuickSongBar: React.FC<QuickSongBarProps> = ({ disabled }) => {
       handleLoadQuickSong, 
       handleSaveQuickSong, 
       handleRandomize, 
+      handleResetToDefault,
       loadedQuickSongIndex,
       handleQuickSongPressingChange 
   } = useMetronome();
@@ -223,24 +262,29 @@ const QuickSongBar: React.FC<QuickSongBarProps> = ({ disabled }) => {
 
   return (
     <div className={`w-full flex flex-col items-center gap-2 transition-opacity duration-300 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
-      <div className="w-full flex items-start justify-center gap-4">
-        {Array.from({ length: 3 }).map((_, index) => (
-          <QuickSongSlot
-            key={index}
-            slotIndex={index}
-            song={quickSongs[index]}
-            isLoaded={loadedQuickSongIndex === index}
-            onLoad={() => handleLoadQuickSong(index)}
-            onSave={() => handleSaveQuickSong(index)}
-            disabled={disabled}
-            onPressingChange={(isPressing) => handleQuickSongPressingChange(isPressing, index)}
-          />
-        ))}
+      <div className="w-full flex items-center justify-center gap-3">
+        <ResetSlot onReset={handleResetToDefault} disabled={disabled} />
+        
+        <div className="flex items-center justify-center gap-2">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <QuickSongSlot
+                key={index}
+                slotIndex={index}
+                song={quickSongs[index]}
+                isLoaded={loadedQuickSongIndex === index}
+                onLoad={() => handleLoadQuickSong(index)}
+                onSave={() => handleSaveQuickSong(index)}
+                disabled={disabled}
+                onPressingChange={(isPressing) => handleQuickSongPressingChange(isPressing, index)}
+              />
+            ))}
+        </div>
+
         <RandomizerSlot onRandomize={handleRandomize} disabled={disabled} />
       </div>
       {firstThreeSlotsEmpty && (
-        <p className="text-xs text-center text-[var(--text-secondary)]">
-          Long-press a slot to save. Tap the dice to randomize.
+        <p className="text-xs text-center text-[var(--text-secondary)] mt-1">
+          Tap home to reset <span className="mx-1">•</span> Long-press to save <span className="mx-1">•</span> Tap dice to randomize
         </p>
       )}
     </div>

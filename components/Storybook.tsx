@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useMemo, type ReactNode } from 'react';
 import { MetronomeProvider, useMetronome } from '../contexts/MetronomeContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
@@ -100,6 +101,7 @@ const StorybookWrapper: React.FC<{ children: ReactNode }> = ({ children }) => {
         handleSaveQuickSong: (i) => console.log('Storybook: saveQuickSong', i),
         handleQuickSongPressingChange: () => {},
         handleRandomize: () => console.log('Storybook: randomize'),
+        handleResetToDefault: () => console.log('Storybook: resetToDefault'),
         handleLoadSong: (song, setlistId) => setLoadedSongInfo({ songId: song.id, setlistId }),
         handleLoadAndPlay: (song, setlistId) => { setLoadedSongInfo({ songId: song.id, setlistId }); setIsPlaying(true); },
         handleStop: () => setIsPlaying(false),

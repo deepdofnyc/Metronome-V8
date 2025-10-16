@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react';
 import { type MetronomeSettings, type PlaylistItem, type Setlist, type Measure } from '../types';
 import { useMetronomeEngine, useSetlist, useQuickSongs } from '../hooks';
@@ -5,6 +6,26 @@ import { generateDefaultPattern, migrateSettingsIfNeeded, generateRandomPattern,
 import { AudioEngine } from '../services/audioEngine';
 import { SOUND_OPTIONS } from '../constants';
 
+const getDefaultSettings = (): MetronomeSettings => {
+    const now = Date.now();
+    const initialMeasures: Measure[] = [
+        { id: `m-${now}-init-m1`, beats: 4, subdivisions: 4, pattern: generateDefaultPattern(4, 4) },
+    ];
+    return {
+      bpm: 112,
+      beatSoundId: 'classic',
+      subdivisionSoundId: 'classic',
+      accentVolume: 0.75, 
+      beatVolume: 0.5, 
+      masterVolume: 0.7, 
+      swing: 0,
+      measureSequence: initialMeasures,
+      countIn: false,
+      loop: true,
+      isAdvanced: false,
+      simpleView: 'grid',
+    };
+};
 
 interface IMetronomeContext {
     settings: MetronomeSettings;
@@ -60,6 +81,7 @@ interface IMetronomeContext {
     handleSaveQuickSong: (slotIndex: number) => void;
     handleQuickSongPressingChange: (isPressing: boolean, slotIndex: number) => void;
     handleRandomize: () => void;
+    handleResetToDefault: () => void;
     handleLoadSong: (song: PlaylistItem, setlistId: string, preventStop?: boolean) => void;
     handleLoadAndPlay: (song: PlaylistItem, setlistId: string) => void;
     handleStop: () => void;
@@ -89,26 +111,7 @@ export const useMetronome = () => {
 
 export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // Global/Song settings state. This holds the configuration for the currently loaded song or new session.
-    const [settings, setSettings] = useState<MetronomeSettings>(() => {
-        const now = Date.now();
-        const initialMeasures: Measure[] = [
-            { id: `m-${now}-init-m1`, beats: 4, subdivisions: 4, pattern: generateDefaultPattern(4, 4) },
-        ];
-        return {
-          bpm: 112,
-          beatSoundId: 'classic',
-          subdivisionSoundId: 'classic',
-          accentVolume: 0.75, 
-          beatVolume: 0.5, 
-          masterVolume: 0.7, 
-          swing: 0,
-          measureSequence: initialMeasures,
-          countIn: false,
-          loop: true,
-          isAdvanced: false,
-          simpleView: 'grid',
-        };
-    });
+    const [settings, setSettings] = useState<MetronomeSettings>(getDefaultSettings);
 
     // UI State that affects logic
     const [isAdvSequencerActive, setIsAdvSequencerActive] = useState(false);
@@ -532,6 +535,21 @@ export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children 
         });
     }, []);
 
+    const handleResetToDefault = useCallback(() => {
+        const wasPlaying = isPlaying;
+        if (wasPlaying) {
+            engineTogglePlay();
+        }
+
+        setSettings(getDefaultSettings());
+
+        setIsAdvSequencerActive(false);
+        setSelectedMeasureIndices([]);
+        setLoadedSongInfo(null);
+        setLoadedQuickSongIndex(null);
+        setIsDirty(false);
+    }, [isPlaying, engineTogglePlay]);
+
     const handleRandomize = useCallback(() => {
         const wasPlaying = isPlaying;
         if (wasPlaying) {
@@ -725,7 +743,8 @@ export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children 
         handleLoadAndPlay, handleStop, onRenameTriggered, handleCancelChanges, handlePrevSong,
         handleNextSong, handleMeasureSequenceChange, handleDuplicateMeasure,
         onSetSelectedMeasureIndices: setSelectedMeasureIndices, handleCountInChange,
-        updateSetting, handleLoopChange, handleRandomizeSelectedMeasures, addDemoSetlist
+        updateSetting, handleLoopChange, handleRandomizeSelectedMeasures, addDemoSetlist,
+        handleResetToDefault,
     }), [
         settings, settingsForDisplay, measureForDisplay, simpleViewMeasure, isPlaying,
         isAdvSequencerActive, isDirty, loadedSongInfo, loadedQuickSongIndex,
@@ -738,7 +757,7 @@ export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children 
         handleLoadSong, handleLoadAndPlay, handleStop, onRenameTriggered, handleCancelChanges,
         handlePrevSong, handleNextSong, handleMeasureSequenceChange, handleDuplicateMeasure,
         handleCountInChange, updateSetting, handleLoopChange, handleRandomizeSelectedMeasures,
-        addDemoSetlist
+        addDemoSetlist, handleResetToDefault
     ]);
 
     return (
