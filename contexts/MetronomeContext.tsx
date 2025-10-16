@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react';
 import { type MetronomeSettings, type PlaylistItem, type Setlist, type Measure } from '../types';
 import { useMetronomeEngine, useSetlist, useQuickSongs } from '../hooks';
@@ -109,7 +108,7 @@ export const useMetronome = () => {
     return context;
 };
 
-export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const MetronomeProvider: React.FC<{ children: ReactNode; value?: IMetronomeContext; }> = ({ children, value: storybookValue }) => {
     // Global/Song settings state. This holds the configuration for the currently loaded song or new session.
     const [settings, setSettings] = useState<MetronomeSettings>(getDefaultSettings);
 
@@ -761,7 +760,7 @@ export const MetronomeProvider: React.FC<{ children: ReactNode }> = ({ children 
     ]);
 
     return (
-        <MetronomeContext.Provider value={value}>
+        <MetronomeContext.Provider value={storybookValue || value}>
             {children}
         </MetronomeContext.Provider>
     );

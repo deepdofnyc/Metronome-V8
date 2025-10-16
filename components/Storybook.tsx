@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useMemo, type ReactNode } from 'react';
 import { MetronomeProvider, useMetronome } from '../contexts/MetronomeContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
@@ -64,7 +61,8 @@ const StorybookWrapper: React.FC<{ children: ReactNode }> = ({ children }) => {
         isRhythmSliderActive: false,
         isKnobActive: false,
         isBpmSliderDragging: false,
-        pressingSlots: new Set(),
+        // FIX: Explicitly type the Set to match the context interface.
+        pressingSlots: new Set<number>(),
         beatTrigger,
         currentStep: -1,
         stepInMeasure: -1,
@@ -121,7 +119,7 @@ const StorybookWrapper: React.FC<{ children: ReactNode }> = ({ children }) => {
 
     return (
         <AuthProvider>
-            <MetronomeProvider value={mockContextValue as any}>
+            <MetronomeProvider value={mockContextValue}>
                 {children}
             </MetronomeProvider>
         </AuthProvider>

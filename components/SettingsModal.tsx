@@ -69,6 +69,15 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onClose, settings, updateSe
                         <div className="w-full bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl p-4 flex flex-col">
                             <div className="space-y-4">
                                 <section>
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Account</h3>
+                                    <div className="flex flex-col gap-2">
+                                        <button onClick={() => setPage('account')} className="w-full text-left bg-black/20 hover:bg-white/10 transition-colors p-3 rounded-xl">My Account</button>
+                                    </div>
+                                </section>
+
+                                <div className="w-full h-px bg-white/10"></div>
+
+                                <section>
                                     <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Display Components</h3>
                                     <ToggleSwitch label="BPM Slider Control" checked={settings.showBpmControl} onChange={(v) => updateSetting('showBpmControl', v)} />
                                     <ToggleSwitch label="Tap Tempo Tool" checked={settings.showTapButton} onChange={(v) => updateSetting('showTapButton', v)} />
@@ -103,15 +112,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onClose, settings, updateSe
 
                                 <div className="w-full h-px bg-white/10"></div>
                                 
-                                <section>
-                                    <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Account</h3>
-                                    <div className="flex flex-col gap-2">
-                                        <button onClick={() => setPage('account')} className="w-full text-left bg-black/20 hover:bg-white/10 transition-colors p-3 rounded-xl">My Account</button>
-                                    </div>
-                                </section>
-
-                                <div className="w-full h-px bg-white/10"></div>
-
                                 <section>
                                     <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Help</h3>
                                     <div className="flex flex-col gap-2">
