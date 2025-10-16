@@ -283,8 +283,8 @@ const QuickSongBar: React.FC<QuickSongBarProps> = ({ disabled }) => {
         <RandomizerSlot onRandomize={handleRandomize} disabled={disabled} />
       </div>
       {firstThreeSlotsEmpty && (
-        <p className="text-xs text-center text-[var(--text-secondary)] mt-1">
-          Tap home to reset <span className="mx-1">•</span> Long-press to save <span className="mx-1">•</span> Tap dice to randomize
+        <p className="text-xs text-center text-[var(--text-secondary)] mt-1 whitespace-nowrap">
+          Tap home to reset <span className="mx-1">|</span> Long-press to save <span className="mx-1">|</span> Tap dice to randomize
         </p>
       )}
     </div>
