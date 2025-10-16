@@ -1,13 +1,12 @@
 
-
-
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React from 'react';
 import { useAppSettings } from './hooks';
 import { MetronomeProvider, useMetronome } from './contexts/MetronomeContext';
+import { AuthProvider } from './contexts/AuthContext';
 import Knob from './components/Knob';
 import SetlistManager from './components/SetlistManager';
 import BpmControl from './components/HorizontalBpmSlider';
-import RhythmSlider from './components/RhythmSlider';
+import CircularRhythmControl from './components/RhythmSlider';
 import Sequencer from './components/Sequencer';
 import SoundSelector from './components/SoundSelector';
 import AddToHomeScreenPrompt from './components/AddToHomeScreenPrompt';
@@ -22,6 +21,7 @@ import {
     PlayIcon,
     PauseIcon
 } from './components/Icons';
+import Storybook from './components/Storybook';
 
 
 /**
@@ -94,28 +94,28 @@ const AppContent: React.FC = () => {
   } = useMetronome();
   
   // Local UI State
-  const [activePanel, setActivePanel] = useState<'mixer' | 'sounds' | null>(null);
-  const [isEditingSequence, setIsEditingSequence] = useState(false);
-  const [isSongsContainerOpen, setIsSongsContainerOpen] = useState(false);
-  const [activeSetlistId, setActiveSetlistId] = useState<string | null>(null);
-  const [isSettingsViewVisible, setIsSettingsViewVisible] = useState(false);
-  const [isFeedbackViewVisible, setIsFeedbackViewVisible] = useState(false);
-  const [isManualViewVisible, setIsManualViewVisible] = useState(false);
+  const [activePanel, setActivePanel] = React.useState<'mixer' | 'sounds' | null>(null);
+  const [isEditingSequence, setIsEditingSequence] = React.useState(false);
+  const [isSongsContainerOpen, setIsSongsContainerOpen] = React.useState(false);
+  const [activeSetlistId, setActiveSetlistId] = React.useState<string | null>(null);
+  const [isSettingsViewVisible, setIsSettingsViewVisible] = React.useState(false);
+  const [isFeedbackViewVisible, setIsFeedbackViewVisible] = React.useState(false);
+  const [isManualViewVisible, setIsManualViewVisible] = React.useState(false);
 
   // Refs
-  const panelRef = useRef<HTMLDivElement>(null);
-  const mainContentEndRef = useRef<HTMLDivElement>(null);
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  const mainContentEndRef = React.useRef<HTMLDivElement>(null);
   
-  const loadedSongId = useMemo(() => loadedSongInfo?.songId ?? null, [loadedSongInfo]);
+  const loadedSongId = React.useMemo(() => loadedSongInfo?.songId ?? null, [loadedSongInfo]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // When entering sequence edit mode, close any open panels.
     if (isEditingSequence) {
         setActivePanel(null);
     }
   }, [isEditingSequence]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Prevents page scroll on mobile browsers when dragging a slider.
     const isActive = isRhythmSliderActive || isKnobActive || isBpmSliderDragging;
     const mainEl = document.querySelector('main');
@@ -133,18 +133,18 @@ const AppContent: React.FC = () => {
     };
   }, [isRhythmSliderActive, isKnobActive, isBpmSliderDragging]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Auto-scroll to the bottom when a panel (Mixer/Sounds) is opened
     if (activePanel && mainContentEndRef.current) {
       setTimeout(() => mainContentEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 150);
     }
   }, [activePanel]);
 
-  const handlePanelToggle = useCallback((panel: 'mixer' | 'sounds') => {
+  const handlePanelToggle = React.useCallback((panel: 'mixer' | 'sounds') => {
     setActivePanel(prev => prev === panel ? null : panel);
   }, []);
 
-  const handleToggleSongsContainer = useCallback(() => {
+  const handleToggleSongsContainer = React.useCallback(() => {
     const nextState = !isSongsContainerOpen;
     setIsSongsContainerOpen(nextState);
     if (!nextState) {
@@ -192,32 +192,36 @@ const AppContent: React.FC = () => {
                 max={appSettings.maxBpm}
               />
                         
-              <div className={`relative w-full flex items-center justify-center gap-4 bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl px-[15px] py-2 transition-all duration-300 ${isRhythmSliderActive ? 'z-40' : ''} ${isEditingSequence ? 'opacity-50 pointer-events-none' : ''}`}>
-                  <RhythmSlider label="Beats" value={measureForDisplay.beats} min={1} max={16} onChange={(v) => handleSimpleRhythmChange('beats', v)} onInteractionStateChange={setIsRhythmSliderActive} accentColor='var(--strong-beat-accent)' />
-                  <button
-                      onClick={togglePlay}
-                      disabled={isEditingSequence || !!activeSetlistId}
-                      className={`flex-shrink-0 flex items-center justify-center rounded-full transition-all duration-300 ease-in-out ${isPlaying ? 'bg-gray-400 text-black border-2 border-black/20' : 'bg-white/20 hover:bg-white/30 text-white border border-white/30'} ${!!activeSetlistId ? 'w-0 h-0 scale-0 opacity-0' : 'w-20 h-20 scale-100 opacity-100'}`}
-                      aria-label={isPlaying ? 'Pause' : 'Play'}
-                      aria-hidden={!!activeSetlistId}
-                  >
-                      {isPlaying ? <PauseIcon /> : <PlayIcon />}
-                  </button>
-                  <RhythmSlider label="SUBD." value={measureForDisplay.subdivisions} min={1} max={16} onChange={(v) => handleSimpleRhythmChange('subdivisions', v)} onInteractionStateChange={setIsRhythmSliderActive} accentColor='var(--secondary-accent)' />
+              <div className={`w-full flex items-stretch gap-2 ${isEditingSequence ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <div className={`relative w-3/4 flex items-center justify-around bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl px-2 transition-all duration-300 h-[100px] ${isRhythmSliderActive ? 'z-40' : ''}`}>
+                      <CircularRhythmControl label="Beats" value={measureForDisplay.beats} min={1} max={16} onChange={(v) => handleSimpleRhythmChange('beats', v)} onInteractionStateChange={setIsRhythmSliderActive} accentColor='var(--strong-beat-accent)' />
+                      <CircularRhythmControl label="SUBD." value={measureForDisplay.subdivisions} min={1} max={16} onChange={(v) => handleSimpleRhythmChange('subdivisions', v)} onInteractionStateChange={setIsRhythmSliderActive} accentColor='var(--secondary-accent)' />
+                      <CircularRhythmControl label="Swing" value={Math.round(settingsForDisplay.swing * 100)} min={0} max={100} onChange={(v) => updateSetting('swing', v / 100)} onInteractionStateChange={setIsRhythmSliderActive} accentColor='var(--tertiary-accent)' />
+                  </div>
+                  <div className="w-1/4">
+                      <button
+                          onClick={togglePlay}
+                          disabled={isEditingSequence || !!activeSetlistId}
+                          className={`w-full h-full flex items-center justify-center bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl transition-all duration-300 ease-in-out ${isPlaying ? 'bg-gray-400 text-black' : 'bg-white/20 hover:enabled:bg-white/30 text-white'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                          aria-label={isPlaying ? 'Pause' : 'Play'}
+                      >
+                          {isPlaying ? <PauseIcon /> : <PlayIcon />}
+                      </button>
+                  </div>
               </div>
 
               {appSettings.showSetlists && (
-                <div className={isEditingSequence ? 'opacity-50 pointer-events-none w-full' : 'w-full'}>
+                  <div className={`w-full ${isEditingSequence ? 'opacity-50 pointer-events-none' : ''}`}>
                     <SetlistManager 
-                    isContainerOpen={isSongsContainerOpen} 
-                    onToggleVisibility={handleToggleSongsContainer} 
-                    onActiveSetlistChange={setActiveSetlistId}
+                        isContainerOpen={isSongsContainerOpen} 
+                        onToggleVisibility={handleToggleSongsContainer} 
+                        onActiveSetlistChange={setActiveSetlistId}
                     />
-                </div>
+                  </div>
               )}
 
               {appSettings.showSequencer && (
-                <div className={`w-full ${isRhythmSliderActive ? 'relative z-40' : ''} ${isEditingSequence ? 'relative z-10' : ''}`}>
+                <div className={`w-full ${isRhythmSliderActive || isKnobActive ? 'relative z-40' : ''} ${isEditingSequence ? 'relative z-10' : ''}`}>
                     <Sequencer
                     // General props that are managed by this UI component
                     isFlipped={isAdvSequencerActive}
@@ -252,7 +256,7 @@ const AppContent: React.FC = () => {
 
               {activePanel && (
                 <div ref={panelRef} className={`w-full bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl px-[15px] pt-6 pb-8 animate-panel ${isKnobActive ? 'z-40' : ''}`}>
-                  {activePanel === 'mixer' && <div className="flex flex-col gap-4"><Knob label="Accent" value={settingsForDisplay.accentVolume} onChange={(v) => updateSetting('accentVolume', v)} color="var(--strong-beat-accent)" onInteractionStateChange={setIsKnobActive} /><Knob label="Subdivision" value={settingsForDisplay.beatVolume} onChange={(v) => updateSetting('beatVolume', v)} color="var(--secondary-accent)" onInteractionStateChange={setIsKnobActive} /><Knob label="Swing" value={settingsForDisplay.swing} onChange={(v) => updateSetting('swing', v)} min={0} max={1} color="var(--tertiary-accent)" onInteractionStateChange={setIsKnobActive} /><Knob label="Master" value={settings.masterVolume} onChange={(v) => updateSetting('masterVolume', v)} min={0} max={1} color="var(--text-primary)" onInteractionStateChange={setIsKnobActive} /></div>}
+                  {activePanel === 'mixer' && <div className="flex flex-col gap-4"><Knob label="Accent" value={settingsForDisplay.accentVolume} onChange={(v) => updateSetting('accentVolume', v)} color="var(--strong-beat-accent)" onInteractionStateChange={setIsKnobActive} /><Knob label="Subdivision" value={settingsForDisplay.beatVolume} onChange={(v) => updateSetting('beatVolume', v)} color="var(--secondary-accent)" onInteractionStateChange={setIsKnobActive} /><Knob label="Master" value={settings.masterVolume} onChange={(v) => updateSetting('masterVolume', v)} min={0} max={1} color="var(--text-primary)" onInteractionStateChange={setIsKnobActive} /></div>}
                   {activePanel === 'sounds' && <SoundSelector />}
                 </div>
               )}
@@ -283,10 +287,29 @@ const AppContent: React.FC = () => {
 
 
 const App: React.FC = () => {
+  const [isStorybookMode, setIsStorybookMode] = React.useState(false);
+
+  React.useEffect(() => {
+    // Check for query param on mount to enable storybook mode
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('storybook') === 'true') {
+      setIsStorybookMode(true);
+      // Clean up the aurora effect for storybook view
+      document.body.className = 'text-white antialiased';
+      document.body.style.backgroundColor = '#18181b';
+    }
+  }, []);
+
+  if (isStorybookMode) {
+    return <Storybook />;
+  }
+
   return (
-    <MetronomeProvider>
-      <AppContent />
-    </MetronomeProvider>
+    <AuthProvider>
+      <MetronomeProvider>
+        <AppContent />
+      </MetronomeProvider>
+    </AuthProvider>
   );
 };
 

@@ -17,47 +17,63 @@ interface RingSequencerProps {
 const RingSequencer: React.FC<RingSequencerProps> = ({ beats, subdivisions, pattern, onPatternChange, currentStep, isPlaying, disabled = false, bpm, beatSoundId, subdivisionSoundId }) => {
     const [manuallyPressedSteps, setManuallyPressedSteps] = useState<Set<string>>(new Set());
     const [pulsingStep, setPulsingStep] = useState<number>(-1);
-    const [rotation, setRotation] = useState(0);
-    const animationFrameId = useRef<number | undefined>(undefined);
-    const playbackStartTime = useRef<number>(0);
+    
+    // State for the smooth rotation angle, updated on each animation frame.
+    const [rotationAngle, setRotationAngle] = useState(0);
 
-    const measureDurationMs = useMemo(() => {
-        if (beats <= 0 || bpm <= 0) return 0;
-        return (beats * 60 / bpm) * 1000;
-    }, [beats, bpm]);
+    // Refs for managing the animation loop and synchronization with the audio engine.
+    const animationFrameRef = useRef<number | null>(null);
+    const lastStepInfo = useRef<{ step: number; time: number }>({ step: -1, time: 0 });
 
+    const totalSteps = useMemo(() => (beats * subdivisions > 0 ? beats * subdivisions : 1), [beats, subdivisions]);
+
+    // This effect acts as the "sync" point. It captures the exact time the audio engine reports a new step.
+    useEffect(() => {
+        if (isPlaying && currentStep !== lastStepInfo.current.step) {
+            lastStepInfo.current = { step: currentStep, time: performance.now() };
+        }
+    }, [currentStep, isPlaying]);
+    
+    // This effect runs the smooth animation loop. It starts when `isPlaying` is true and stops when it's false.
     useEffect(() => {
         if (!isPlaying) {
-            if (animationFrameId.current) {
-                cancelAnimationFrame(animationFrameId.current);
-                animationFrameId.current = undefined;
+            // When playback stops, smoothly animate back to the start. The CSS transition handles this.
+            setRotationAngle(0); 
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
             }
-            playbackStartTime.current = 0;
-            setRotation(0);
             return;
         }
 
-        playbackStartTime.current = performance.now();
-        setRotation(0);
+        const measureDurationMs = (60 / bpm) * beats * 1000;
+        if (measureDurationMs <= 0 || totalSteps <= 0) return;
+        const stepDurationMs = measureDurationMs / totalSteps;
 
-        const animate = (timestamp: number) => {
-            if (measureDurationMs > 0 && playbackStartTime.current > 0) {
-                const elapsedTime = timestamp - playbackStartTime.current;
-                const progress = (elapsedTime % measureDurationMs) / measureDurationMs;
-                const newRotation = progress * 360;
-                setRotation(-newRotation);
-            }
-            animationFrameId.current = requestAnimationFrame(animate);
+        // Ensure we have a valid starting point for the animation, especially when switching views.
+        if (lastStepInfo.current.step < 0 || lastStepInfo.current.step !== currentStep) {
+            lastStepInfo.current = { step: currentStep >= 0 ? currentStep : 0, time: performance.now() };
+        }
+        
+        const animate = () => {
+            const timeSinceLastStep = performance.now() - lastStepInfo.current.time;
+            const progressWithinStep = timeSinceLastStep / stepDurationMs;
+            const totalProgressInSteps = lastStepInfo.current.step + progressWithinStep;
+            const newRotation = -(totalProgressInSteps / totalSteps) * 360;
+            
+            setRotationAngle(newRotation);
+            animationFrameRef.current = requestAnimationFrame(animate);
         };
 
-        animationFrameId.current = requestAnimationFrame(animate);
+        animationFrameRef.current = requestAnimationFrame(animate);
 
         return () => {
-            if (animationFrameId.current) {
-                cancelAnimationFrame(animationFrameId.current);
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
             }
         };
-    }, [isPlaying, measureDurationMs]);
+    }, [isPlaying, beats, totalSteps, bpm, currentStep]);
+
 
     useEffect(() => {
         if (!isPlaying) {
@@ -153,7 +169,6 @@ const RingSequencer: React.FC<RingSequencerProps> = ({ beats, subdivisions, patt
         });
     };
     
-    const totalSteps = useMemo(() => (beats * subdivisions > 0 ? beats * subdivisions : 1), [beats, subdivisions]);
     if (totalSteps <= 0 || totalSteps > 256 || beats <= 0) return <div className="text-center text-sm text-red-400">Invalid grid size</div>;
 
     const currentBeat = useMemo(() => {
@@ -229,9 +244,10 @@ const RingSequencer: React.FC<RingSequencerProps> = ({ beats, subdivisions, patt
     const activeBeatIndex = (isPlaying && pulsingStep !== -1 && subdivisions > 0) ? Math.floor(pulsingStep / subdivisions) : -1;
     
     const rotationGroupStyle: React.CSSProperties = {
-        transform: `rotate(${rotation}deg)`,
+        transform: `rotate(${rotationAngle}deg)`,
         transformOrigin: '100px 100px',
-        transition: isPlaying ? 'none' : 'transform 0.3s ease-out',
+        // When playing, rotation is handled by JS. When stopping, smoothly transition back to start.
+        transition: isPlaying ? 'none' : 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)',
     };
 
     return (

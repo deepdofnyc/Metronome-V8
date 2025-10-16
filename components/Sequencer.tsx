@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { type Measure } from '../types';
 import { generateDefaultPattern } from '../utils';
 import RingSequencer from './RingSequencer';
@@ -55,6 +56,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
     handleLoopChange,
     updateSetting,
     handleRandomizeSelectedMeasures,
+    setIsKnobActive,
   } = useMetronome();
   
   const { 
@@ -69,7 +71,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
   } = settings;
   
   const { beatSoundId, subdivisionSoundId, bpm } = settingsForDisplay;
-
+  
   // Refs for managing props during flip transition to prevent visual glitches
   const prevFrontProps = useRef({ beats, subdivisions, pattern });
   useEffect(() => {
@@ -323,7 +325,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
   };
 
 
-  const containerClasses = `w-full bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl p-[15px] transition-opacity duration-300 flip-container ${props.disabled ? 'opacity-50' : ''} overflow-hidden`;
+  const containerClasses = `w-full bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl p-[15px] transition-opacity duration-300 flip-container ${props.disabled ? 'opacity-50' : ''}`;
   
   return (
     <div className={containerClasses}>
@@ -332,24 +334,29 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
         <div className="front" id="sequencer-front" aria-hidden={isFlipped}>
           <div ref={frontContentRef} className="flex flex-col w-full">
             <div className="flex justify-between items-center pb-4 mb-4 border-b border-white/10">
-              <button
-                onClick={() => updateSetting('simpleView', simpleView === 'grid' ? 'rings' : 'grid')}
-                className="flex items-center gap-1 bg-black/20 p-1 rounded-full cursor-pointer transition-colors hover:bg-black/40"
-                aria-label={`Switch to ${simpleView === 'grid' ? 'ring' : 'grid'} view`}
-                aria-live="polite"
-              >
-                <div className={`p-1.5 rounded-full transition-colors duration-300 ${simpleView === 'grid' ? 'text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'}`} aria-hidden="true"><GridViewIcon /></div>
-                <div className={`p-1.5 rounded-full transition-colors duration-300 ${simpleView === 'rings' ? 'text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'}`} aria-hidden="true"><RingViewIcon /></div>
-              </button>
-              <button
-                onClick={() => onFlip(true)}
-                className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors py-2"
-                aria-controls="sequencer-back"
-                aria-expanded="false"
-              >
-                <AdvSequencerIcon />
-                Adv. Sequencer
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => updateSetting('simpleView', simpleView === 'grid' ? 'rings' : 'grid')}
+                  className="h-11 flex items-center gap-1 bg-black/20 p-1 rounded-full cursor-pointer transition-colors hover:bg-black/40"
+                  aria-label={`Switch to ${simpleView === 'grid' ? 'ring' : 'grid'} view`}
+                  aria-live="polite"
+                >
+                  <div className={`p-1.5 rounded-full transition-colors duration-300 ${simpleView === 'grid' ? 'text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'}`} aria-hidden="true"><GridViewIcon /></div>
+                  <div className={`p-1.5 rounded-full transition-colors duration-300 ${simpleView === 'rings' ? 'text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'}`} aria-hidden="true"><RingViewIcon /></div>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onFlip(true)}
+                  className="h-11 flex items-center gap-2 bg-black/20 pl-2 pr-3 rounded-full cursor-pointer transition-colors hover:bg-black/40 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  aria-controls="sequencer-back"
+                  aria-expanded="false"
+                >
+                  <AdvSequencerIcon />
+                  Adv. Sequencer
+                </button>
+              </div>
             </div>
 
             {simpleView === 'grid' ? (

@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 
-interface RhythmSliderProps {
+interface CircularRhythmControlProps {
   label: string;
   value: number;
   min: number;
@@ -10,30 +10,63 @@ interface RhythmSliderProps {
   accentColor?: string;
 }
 
-const RhythmSlider: React.FC<RhythmSliderProps> = ({ label, value, min, max, onChange, onInteractionStateChange, accentColor = 'var(--primary-accent)' }) => {
+// Helper to convert polar coordinates to Cartesian for SVG paths (0 degrees is at 3 o'clock)
+function polarToCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
+    const angleInRadians = (angleInDegrees * Math.PI) / 180.0;
+    return {
+        x: centerX + radius * Math.cos(angleInRadians),
+        y: centerY + radius * Math.sin(angleInRadians),
+    };
+}
+
+// Helper to describe an SVG arc path
+function describeArc(x: number, y: number, radius: number, startAngle: number, endAngle: number): string {
+    // Prevent arc from disappearing at tiny values or when full
+    if (endAngle <= startAngle + 0.01) {
+      endAngle = startAngle + 0.01;
+    }
+    if (endAngle >= startAngle + 360) {
+      endAngle = startAngle + 359.99;
+    }
+
+    const start = polarToCartesian(x, y, radius, startAngle);
+    const end = polarToCartesian(x, y, radius, endAngle);
+
+    const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+
+    const d = [
+        'M', start.x, start.y,
+        'A', radius, radius, 0, largeArcFlag, 1, end.x, end.y, // sweep-flag=1 for clockwise
+    ].join(' ');
+
+    return d;
+}
+
+
+const CircularRhythmControl: React.FC<CircularRhythmControlProps> = ({ label, value, min, max, onChange, onInteractionStateChange, accentColor = 'var(--primary-accent)' }) => {
   const [isInteracting, setIsInteracting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isPopupVisible, setIsPopupVisible] = useState(false);
+  
+  // Use local state for immediate feedback during drag, preventing lag-induced issues.
+  const [localValue, setLocalValue] = useState(value);
   
   const dragStartRef = useRef<{
     initialX: number;
     initialY: number;
     initialValue: number;
   } | null>(null);
-  const currentValueRef = useRef(value);
   const popupTimeoutRef = useRef<number | null>(null);
 
+  // Sync local state with prop when not dragging.
   useEffect(() => {
-    currentValueRef.current = value;
-  }, [value]);
-
-  const fillPercentage = max > min ? ((value - min) / (max - min)) * 100 : 0;
-  
-  const sliderStyle = {
-    background: `linear-gradient(to right, ${accentColor} 0%, ${accentColor} ${fillPercentage}%, rgba(255, 255, 255, 0.15) ${fillPercentage}%, rgba(255, 255, 255, 0.15) 100%)`
-  } as React.CSSProperties;
+    if (!isDragging) {
+      setLocalValue(value);
+    }
+  }, [value, isDragging]);
 
   const handleInteractionStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
     const nativeEvent = e.nativeEvent;
     const isTouchEvent = 'touches' in nativeEvent;
     const clientX = isTouchEvent ? nativeEvent.touches[0].clientX : nativeEvent.clientX;
@@ -41,10 +74,11 @@ const RhythmSlider: React.FC<RhythmSliderProps> = ({ label, value, min, max, onC
 
     setIsInteracting(true);
 
+    // Start drag from the last known prop value to prevent jumps.
     dragStartRef.current = {
       initialX: clientX,
       initialY: clientY,
-      initialValue: currentValueRef.current,
+      initialValue: value,
     };
     
     popupTimeoutRef.current = window.setTimeout(() => {
@@ -53,7 +87,7 @@ const RhythmSlider: React.FC<RhythmSliderProps> = ({ label, value, min, max, onC
         popupTimeoutRef.current = null;
     }, 100);
 
-  }, [onInteractionStateChange]);
+  }, [onInteractionStateChange, value]);
 
   const handleInteractionEnd = useCallback(() => {
     if (!isInteracting) return;
@@ -75,30 +109,25 @@ const RhythmSlider: React.FC<RhythmSliderProps> = ({ label, value, min, max, onC
     if (!isInteracting || !dragStartRef.current) return;
 
     if (!isDragging) {
-      if (popupTimeoutRef.current) {
-          clearTimeout(popupTimeoutRef.current);
-          popupTimeoutRef.current = null;
-      }
-      
-      const isTouchEvent = 'touches' in e;
-      const currentX = isTouchEvent ? e.touches[0].clientX : e.clientX;
-      const currentY = isTouchEvent ? e.touches[0].clientY : ('clientY' in e ? e.clientY : dragStartRef.current.initialY);
-      const deltaX = Math.abs(currentX - dragStartRef.current.initialX);
-      const deltaY = Math.abs(currentY - dragStartRef.current.initialY);
-      const dragThreshold = 5;
+        if (popupTimeoutRef.current) {
+            clearTimeout(popupTimeoutRef.current);
+            popupTimeoutRef.current = null;
+        }
 
-      if (deltaX > dragThreshold || deltaY > dragThreshold) {
-        if (isTouchEvent && deltaY > deltaX) {
-          handleInteractionEnd();
-          return;
+        const isTouchEvent = 'touches' in e;
+        const currentX = isTouchEvent ? e.touches[0].clientX : e.clientX;
+        const currentY = isTouchEvent ? e.touches[0].clientY : e.clientY;
+        const deltaX = Math.abs(currentX - dragStartRef.current.initialX);
+        const deltaY = Math.abs(currentY - dragStartRef.current.initialY);
+        const dragThreshold = 5;
+
+        if (deltaX > dragThreshold || deltaY > dragThreshold) {
+            setIsDragging(true);
+            if (!isPopupVisible) {
+                setIsPopupVisible(true);
+                onInteractionStateChange(true);
+            }
         }
-        
-        setIsDragging(true);
-        if (!isPopupVisible) {
-            setIsPopupVisible(true);
-            onInteractionStateChange(true);
-        }
-      }
     }
 
     if (isDragging) {
@@ -106,24 +135,34 @@ const RhythmSlider: React.FC<RhythmSliderProps> = ({ label, value, min, max, onC
       
       const isTouchEvent = 'touches' in e;
       const currentX = isTouchEvent ? e.touches[0].clientX : e.clientX;
-      const totalDeltaX = currentX - dragStartRef.current.initialX;
-      const sensitivity = 15;
-      const valueChange = Math.round(totalDeltaX / sensitivity);
-      const newValue = dragStartRef.current.initialValue + valueChange;
-      const clampedValue = Math.max(min, Math.min(max, newValue));
+      const currentY = isTouchEvent ? e.touches[0].clientY : e.clientY;
 
-      if (clampedValue !== currentValueRef.current) {
+      const totalDeltaX = currentX - dragStartRef.current.initialX;
+      const totalDeltaY = currentY - dragStartRef.current.initialY;
+      
+      // Combine vertical and horizontal movement.
+      // Up/Right increases value, Down/Left decreases.
+      const combinedDelta = totalDeltaX - totalDeltaY;
+
+      const sensitivity = 20; // Adjusted sensitivity for combined inputs
+      const valueChange = combinedDelta / sensitivity;
+      const newValue = dragStartRef.current.initialValue + valueChange;
+      const clampedValue = Math.round(Math.max(min, Math.min(max, newValue)));
+
+      // Compare with local state to prevent redundant updates to the parent.
+      if (clampedValue !== localValue) {
+        setLocalValue(clampedValue);
         onChange(clampedValue);
       }
     }
-  }, [isInteracting, isDragging, isPopupVisible, onInteractionStateChange, min, max, onChange, handleInteractionEnd]);
+  }, [isInteracting, isDragging, isPopupVisible, onInteractionStateChange, min, max, onChange, localValue]);
 
   useEffect(() => {
     const moveHandler = (e: MouseEvent | TouchEvent) => handleInteractionMove(e);
     const endHandler = () => handleInteractionEnd();
 
     if (isInteracting) {
-      document.addEventListener('mousemove', moveHandler);
+      document.addEventListener('mousemove', moveHandler, { passive: false });
       document.addEventListener('touchmove', moveHandler, { passive: false });
       document.addEventListener('mouseup', endHandler);
       document.addEventListener('touchend', endHandler);
@@ -137,7 +176,26 @@ const RhythmSlider: React.FC<RhythmSliderProps> = ({ label, value, min, max, onC
     };
   }, [isInteracting, handleInteractionMove, handleInteractionEnd]);
   
-  const containerClasses = `relative flex flex-col items-center gap-2 flex-1 px-2 py-1 transition-opacity duration-300 ${isPopupVisible ? 'z-40' : ''} cursor-pointer`;
+  const containerClasses = `relative flex flex-col items-center justify-center gap-0 flex-1 transition-opacity duration-300 ${isPopupVisible ? 'z-40' : ''} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`;
+
+  // SVG Arc Calculations
+  const START_ANGLE = 150; // Corresponds to 8 o'clock
+  const ANGLE_RANGE = 240; // 240 degrees from 8 o'clock to 4 o'clock
+  const END_ANGLE = START_ANGLE + ANGLE_RANGE;
+
+  const radius = 33;
+  const strokeWidth = 4;
+  const viewBoxSize = 80;
+  
+  const fullArcPath = describeArc(viewBoxSize / 2, viewBoxSize / 2, radius, START_ANGLE, END_ANGLE);
+  const valueForDisplay = isDragging ? localValue : value;
+  // Safety clamp normalizedValue between 0 and 1
+  const normalizedValue = Math.max(0, Math.min(1, (valueForDisplay - min) / (max - min)));
+  const currentAngle = START_ANGLE + (normalizedValue * ANGLE_RANGE);
+  const valuePath = describeArc(viewBoxSize / 2, viewBoxSize / 2, radius, START_ANGLE, currentAngle);
+  
+  // Disable CSS transitions during drag to prevent visual tearing/bugs
+  const pathClassName = isDragging ? '' : 'transition-all duration-100';
 
   return (
     <div
@@ -147,30 +205,49 @@ const RhythmSlider: React.FC<RhythmSliderProps> = ({ label, value, min, max, onC
       role="slider"
       aria-valuemin={min}
       aria-valuemax={max}
-      aria-valuenow={value}
-      aria-orientation="horizontal"
-      aria-label={`${label} slider`}
+      aria-valuenow={valueForDisplay}
+      aria-orientation="vertical"
+      aria-label={`${label} control`}
     >
       {isPopupVisible && (
         <div 
             className="value-popup absolute bottom-full left-1/2 mb-3.5 w-28 h-28 rounded-3xl border border-[var(--container-border)] flex items-center justify-center pointer-events-none shadow-2xl"
             style={{ backgroundColor: accentColor }}
         >
-          <span key={value} className="text-6xl font-bold font-mono text-black tabular-nums">
-            {value}
+          <span key={localValue} className="text-6xl font-bold font-mono text-black tabular-nums">
+            {localValue}
           </span>
         </div>
       )}
-      <div className="w-full flex justify-between items-baseline pointer-events-none">
-        <span className="text-sm text-[var(--text-secondary)] uppercase tracking-wider">{label}</span>
-        <span className={`text-3xl font-mono font-bold text-[var(--text-primary)] tabular-nums transition-opacity duration-200 ${isPopupVisible ? 'opacity-0' : 'opacity-100'}`}>{value}</span>
+
+      <div className="relative w-16 h-16 sm:w-20 sm:h-20">
+          <svg viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`} className="absolute inset-0 w-full h-full">
+              {/* Background Track */}
+              <path
+                  d={fullArcPath}
+                  fill="none"
+                  stroke="rgba(255, 255, 255, 0.1)"
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+              />
+              {/* Value Progress */}
+              <path
+                  d={valuePath}
+                  fill="none"
+                  stroke={accentColor}
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+                  className={pathClassName}
+              />
+          </svg>
+          <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 ${isPopupVisible ? 'opacity-0' : 'opacity-100'}`}>
+              <span className="text-2xl sm:text-3xl font-mono font-bold text-[var(--text-primary)] tabular-nums">{valueForDisplay}</span>
+          </div>
       </div>
-      <div
-        className="mixer-slider h-1.5 w-full pointer-events-none"
-        style={sliderStyle}
-      />
+
+      <span className={`-mt-4 text-[11px] text-[var(--text-secondary)] uppercase tracking-wider transition-opacity duration-200 ${isPopupVisible ? 'opacity-0' : 'opacity-100'}`}>{label}</span>
     </div>
   );
 };
 
-export default RhythmSlider;
+export default CircularRhythmControl;

@@ -1,6 +1,4 @@
 
-
-
 export type SubdivisionV1 = 'quarter' | 'eighth' | 'triplet' | 'sixteenth';
 
 export interface Sound {
@@ -65,4 +63,10 @@ export interface Setlist {
   id: string;
   name: string;
   songs: PlaylistItem[];
+}
+
+// Added for authentication
+export interface Credentials {
+  email: string;
+  password: string;
 }
