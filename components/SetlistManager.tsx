@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { type PlaylistItem, type Setlist, type MetronomeSettings } from '../types';
 import { useMetronome } from '../contexts/MetronomeContext';
@@ -24,13 +20,14 @@ interface SetlistManagerProps {
   isContainerOpen: boolean;
   onToggleVisibility: () => void;
   onActiveSetlistChange: (id: string | null) => void;
+  initialActiveSetlistId?: string | null;
 }
 
 const COLORS = ['#1e3a8a', '#312e81', '#4c1d95', '#581c87', '#831843', '#881337', '#7f1d1d'];
 const getSetlistColor = (index: number) => COLORS[index % COLORS.length];
 
 const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
-  const { onToggleVisibility, isContainerOpen, onActiveSetlistChange } = props;
+  const { onToggleVisibility, isContainerOpen, onActiveSetlistChange, initialActiveSetlistId = null } = props;
   const {
     setlists,
     currentlyPlayingId,
@@ -47,7 +44,7 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
   } = useMetronome();
   
   const [isEditMode, setIsEditMode] = useState(false);
-  const [activeSetlistId, setActiveSetlistId] = useState<string | null>(null);
+  const [activeSetlistId, setActiveSetlistId] = useState<string | null>(initialActiveSetlistId);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [newItemId, setNewItemId] = useState<string | null>(null);

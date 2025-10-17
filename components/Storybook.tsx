@@ -61,7 +61,6 @@ const StorybookWrapper: React.FC<{ children: ReactNode }> = ({ children }) => {
         isRhythmSliderActive: false,
         isKnobActive: false,
         isBpmSliderDragging: false,
-        // FIX: Explicitly type the Set to match the context interface.
         pressingSlots: new Set<number>(),
         beatTrigger,
         currentStep: -1,
@@ -233,7 +232,6 @@ const Storybook = () => {
                 </nav>
             </aside>
             <main className="flex-1 flex items-center justify-center p-8 overflow-auto">
-                {/* FIX: Corrected typo from StoryWrapper to StorybookWrapper. */}
                 <StorybookWrapper>
                     <ActiveComponent />
                 </StorybookWrapper>

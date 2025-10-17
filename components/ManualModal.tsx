@@ -1,106 +1,209 @@
 
 
-import React from 'react';
-import { ChevronLeftIcon } from './Icons';
+import React, { useMemo, type ReactNode } from 'react';
+import { ChevronLeftIcon, PlayIcon } from './Icons';
+// FIX: Import `useMetronome` to resolve 'Cannot find name' errors.
+import { MetronomeProvider, useMetronome } from '../contexts/MetronomeContext';
+import { AuthProvider } from '../contexts/AuthContext';
+
+// Import actual components for illustrations
+import BpmControl from './HorizontalBpmSlider';
+import RhythmSlider from './RhythmSlider';
+import Sequencer from './Sequencer';
+import SetlistManager from './SetlistManager';
+import QuickSongBar from './QuickSongBar';
+import Knob from './Knob';
+import AccountManager from './AccountManager';
+import SoundSelector from './SoundSelector';
+
+// Import utilities to create mock data
+import { createDemoSetlist, generateDefaultPattern } from '../utils';
+import { type MetronomeSettings, type PlaylistItem, type Measure } from '../types';
+
+
+// A self-contained mock context provider to render components in isolation.
+// This is a simplified version of the StorybookWrapper.
+const ManualComponentWrapper: React.FC<{
+    children: ReactNode;
+    mods?: Partial<ReturnType<typeof useMetronome>>;
+}> = ({ children, mods }) => {
+    const setlists = useMemo(() => createDemoSetlist(), []);
+
+    const value = useMemo(() => {
+        const baseSettings: MetronomeSettings = {
+            bpm: 120, beatSoundId: 'classic', subdivisionSoundId: 'classic', accentVolume: 0.75,
+            beatVolume: 0.5, masterVolume: 0.7, swing: 0,
+            measureSequence: [{ id: 'm-manual-1', beats: 4, subdivisions: 4, pattern: generateDefaultPattern(4, 4) }],
+            countIn: false, loop: true, isAdvanced: false, simpleView: 'grid',
+        };
+
+        const mockContext: any = {
+            settings: baseSettings,
+            settingsForDisplay: baseSettings,
+            measureForDisplay: baseSettings.measureSequence[0],
+            simpleViewMeasure: baseSettings.measureSequence[0],
+            isPlaying: false, isAdvSequencerActive: false, isDirty: false,
+            loadedSongInfo: null, loadedQuickSongIndex: null, currentlyPlayingId: null,
+            setlists: setlists, newlyAddedItemId: null,
+            quickSongs: [setlists[0].songs[0], setlists[0].songs[1], null],
+            isRhythmSliderActive: false, isKnobActive: false, isBpmSliderDragging: false,
+            pressingSlots: new Set(), beatTrigger: 0, currentStep: -1, stepInMeasure: -1,
+            playingMeasureIndex: -1, stepInPlayingMeasure: -1, selectedMeasureIndices: [],
+            activeSetlist: null, currentSongIndex: -1, canGoPrevSong: false,
+            canGoNextSong: false, playingSetlistId: null,
+            setlistActions: {}, togglePlay: () => {}, setIsRhythmSliderActive: () => {},
+            setIsKnobActive: () => {}, setIsBpmSliderDragging: () => {}, handleSimpleRhythmChange: () => {},
+            handlePatternChange: () => {}, handleFlip: () => {}, handleLoadQuickSong: () => {},
+            handleSaveQuickSong: () => {}, handleQuickSongPressingChange: () => {}, handleRandomize: () => {},
+            handleResetToDefault: () => {}, handleLoadSong: () => {}, handleLoadAndPlay: () => {},
+            handleStop: () => {}, onRenameTriggered: () => {}, handleCancelChanges: () => {},
+            handlePrevSong: () => {}, handleNextSong: () => {}, handleMeasureSequenceChange: () => {},
+            handleDuplicateMeasure: () => {}, onSetSelectedMeasureIndices: () => {}, handleCountInChange: () => {},
+            updateSetting: () => {}, handleLoopChange: () => {}, handleRandomizeSelectedMeasures: () => {},
+            addDemoSetlist: () => {},
+        };
+        return { ...mockContext, ...mods };
+    }, [mods, setlists]);
+
+    return (
+        <AuthProvider>
+            <MetronomeProvider value={value}>
+                {children}
+            </MetronomeProvider>
+        </AuthProvider>
+    );
+};
+
+// --- Component-based Illustrations ---
+
+const BpmControlIllustration = () => (
+    <BpmControl showTapButton={true} showSlider={true} min={40} max={340} />
+);
+
+const RhythmPlayIllustration = () => (
+     <div className="w-full flex items-stretch h-[100px] gap-2.5">
+      <div className="relative flex-1 flex items-center justify-center gap-2 bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl px-2 h-full">
+        <RhythmSlider label="Beats" value={4} min={1} max={16} onChange={()=>{}} onInteractionStateChange={()=>{}} accentColor='var(--strong-beat-accent)' />
+        <RhythmSlider label="SUBD." value={4} min={1} max={16} onChange={()=>{}} onInteractionStateChange={()=>{}} accentColor='var(--secondary-accent)' />
+        <RhythmSlider label="Swing" value={0} min={0} max={100} onChange={()=>{}} onInteractionStateChange={()=>{}} accentColor='var(--tertiary-accent)' />
+      </div>
+      <div className="flex-none w-[90px]">
+        <button className="w-full h-full flex items-center justify-center bg-white/20 border border-[var(--container-border)] rounded-3xl">
+          <PlayIcon />
+        </button>
+      </div>
+    </div>
+);
+
+const SequencerGridViewIllustration = () => {
+    const mods = useMemo(() => {
+        const settings: MetronomeSettings = {
+            bpm: 120, beatSoundId: 'classic', subdivisionSoundId: 'classic', accentVolume: 0.75,
+            beatVolume: 0.5, masterVolume: 0.7, swing: 0,
+            measureSequence: [{ id: 'm-manual-grid', beats: 4, subdivisions: 2, pattern: [3, 1, 2, 1, 3, 1, 2, 1] }],
+            countIn: false, loop: true, isAdvanced: false, simpleView: 'grid',
+        };
+        return { settings: settings, simpleViewMeasure: settings.measureSequence[0] };
+    }, []);
+    return (
+        <ManualComponentWrapper mods={mods}>
+            <div className="w-[340px]">
+                <Sequencer isFlipped={false} onFlip={()=>{}} isEditMode={false} onEditModeChange={()=>{}} />
+            </div>
+        </ManualComponentWrapper>
+    );
+};
+
+const SequencerRingViewIllustration = () => {
+    const mods = useMemo(() => {
+        const settings: MetronomeSettings = {
+            bpm: 120, beatSoundId: 'classic', subdivisionSoundId: 'classic', accentVolume: 0.75,
+            beatVolume: 0.5, masterVolume: 0.7, swing: 0,
+            measureSequence: [{ id: 'm-manual-ring', beats: 3, subdivisions: 3, pattern: [3, 1, 1, 2, 1, 1, 2, 1, 1] }],
+            countIn: false, loop: true, isAdvanced: false, simpleView: 'rings',
+        };
+        return { settings: settings, simpleViewMeasure: settings.measureSequence[0] };
+    }, []);
+    return (
+        <ManualComponentWrapper mods={mods}>
+            <div className="w-[340px]">
+                <Sequencer isFlipped={false} onFlip={()=>{}} isEditMode={false} onEditModeChange={()=>{}} />
+            </div>
+        </ManualComponentWrapper>
+    );
+};
+
+const SequencerAdvViewIllustration = () => {
+    const mods = useMemo(() => {
+        const measureSequence: Measure[] = [
+            // Count-in
+            { id: 'm-adv-cin', beats: 4, subdivisions: 1, pattern: generateDefaultPattern(4, 1) },
+            // Verse 1
+            { id: 'm-adv-m1', beats: 4, subdivisions: 2, pattern: [3, 1, 2, 1, 3, 1, 2, 1] },
+            // Verse 2
+            { id: 'm-adv-m2', beats: 4, subdivisions: 2, pattern: [3, 1, 2, 1, 3, 1, 2, 1] },
+            // Chorus 1
+            { id: 'm-adv-m3', beats: 4, subdivisions: 4, pattern: generateDefaultPattern(4, 4) },
+            // Chorus 2
+            { id: 'm-adv-m4', beats: 4, subdivisions: 4, pattern: generateDefaultPattern(4, 4) },
+        ];
+        const settings: MetronomeSettings = {
+            bpm: 120, beatSoundId: 'classic', subdivisionSoundId: 'classic', accentVolume: 0.75,
+            beatVolume: 0.5, masterVolume: 0.7, swing: 0,
+            measureSequence: measureSequence,
+            countIn: true, loop: true, isAdvanced: true, simpleView: 'grid',
+        };
+        return { 
+            settings: settings,
+            isAdvSequencerActive: true,
+            selectedMeasureIndices: [1] // Select the first "real" measure
+        };
+    }, []);
+
+    return (
+        <ManualComponentWrapper mods={mods}>
+            <div className="w-[340px]">
+                <Sequencer isFlipped={true} onFlip={()=>{}} isEditMode={false} onEditModeChange={()=>{}} />
+            </div>
+        </ManualComponentWrapper>
+    );
+};
+
+
+const SetlistsIllustration = () => {
+    const { setlists } = useMetronome();
+    return <SetlistManager isContainerOpen={true} onToggleVisibility={() => {}} onActiveSetlistChange={() => {}} initialActiveSetlistId={setlists[0].id} />
+}
+
+const QuickSongsIllustration = () => <QuickSongBar />;
+
+const MixerIllustration = () => (
+    <div className="w-full flex flex-col gap-4">
+        <Knob label="Accent" value={0.75} onChange={()=>{}} color="var(--strong-beat-accent)" />
+        <Knob label="Subdivision" value={0.5} onChange={()=>{}} color="var(--secondary-accent)" />
+        <Knob label="Master" value={0.8} onChange={()=>{}} color="var(--text-primary)" />
+    </div>
+);
+
+const SoundsIllustration = () => (
+    <SoundSelector />
+);
+
+const AccountIllustration = () => <AccountManager onBack={() => {}} />;
+
+// --- Main Manual Component ---
 
 interface ManualModalProps {
     onClose: () => void;
 }
 
-const IllustrationWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <div className="my-4 p-4 rounded-xl bg-black/20 flex items-center justify-center">
-        {children}
+const IllustrationWrapper: React.FC<{ children: React.ReactNode, scale?: number }> = ({ children, scale = 0.9 }) => (
+    <div className="my-4 p-4 rounded-xl bg-black/20 flex items-center justify-center overflow-hidden">
+        <div className="pointer-events-none" style={{ transform: `scale(${scale})` }}>
+            {children}
+        </div>
     </div>
 );
-
-const IllustrationMainControls = () => (
-    <svg width="240" height="120" viewBox="0 0 240 120" xmlns="http://www.w3.org/2000/svg">
-        <rect x="20" y="10" width="200" height="60" rx="12" fill="rgba(255,255,255,0.1)"/>
-        <text x="120" y="48" fontFamily="monospace" fontSize="24" fill="white" textAnchor="middle">120</text>
-        <path d="M25 40L20 45L25 50" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M215 40L220 45L215 50" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        <g transform="translate(20, 75)">
-            <circle cx="25" cy="15" r="15" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3"/>
-            <path d="M 25 0 A 15 15 0 0 1 37.5 25" fill="none" stroke="var(--strong-beat-accent)" strokeWidth="3" strokeLinecap="round"/>
-            <text x="25" y="20" fontFamily="monospace" fontSize="12" fill="white" textAnchor="middle">4</text>
-        </g>
-        <g transform="translate(160, 75)">
-            <circle cx="25" cy="15" r="15" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3"/>
-            <path d="M 25 0 A 15 15 0 0 1 37.5 25" fill="none" stroke="var(--secondary-accent)" strokeWidth="3" strokeLinecap="round"/>
-            <text x="25" y="20" fontFamily="monospace" fontSize="12" fill="white" textAnchor="middle">4</text>
-        </g>
-    </svg>
-);
-
-
-const IllustrationSequencer = () => (
-    <svg width="240" height="120" viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <g>
-            <circle cx="50" cy="40" r="10" fill="var(--strong-beat-accent)"/>
-            <circle cx="80" cy="40" r="10" fill="rgba(255,255,255,0.1)"/>
-            <circle cx="50" cy="70" r="10" fill="var(--secondary-accent)"/>
-            <circle cx="80" cy="70" r="10" fill="rgba(255,255,255,0.1)"/>
-        </g>
-        <path d="M115 65C135 85 155 85 175 65" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-        <path d="M170 60L175 65L170 70" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        <g>
-            <rect x="150" y="30" width="60" height="12" rx="4" fill="rgba(255,255,255,0.1)"/>
-            <rect x="150" y="50" width="60" height="12" rx="4" fill="rgba(255,255,255,0.1)"/>
-            <rect x="150" y="70" width="40" height="12" rx="4" fill="rgba(255,255,255,0.1)"/>
-        </g>
-    </svg>
-);
-
-const IllustrationSetlists = () => (
-    <svg width="240" height="120" viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="20" y="10" width="200" height="30" rx="8" fill="rgba(255,255,255,0.15)"/>
-        <path d="M195 20L205 25L195 30V20Z" fill="var(--primary-accent)"/>
-        <rect x="30" y="20" width="80" height="10" rx="3" fill="rgba(255,255,255,0.4)"/>
-        <rect x="20" y="45" width="200" height="30" rx="8" fill="rgba(255,255,255,0.1)"/>
-        <path d="M195 55L205 60L195 65V55Z" fill="white" fillOpacity="0.5"/>
-        <rect x="30" y="55" width="100" height="10" rx="3" fill="rgba(255,255,255,0.3)"/>
-        <rect x="20" y="80" width="200" height="30" rx="8" fill="rgba(255,255,255,0.1)"/>
-        <path d="M195 90L205 95L195 100V90Z" fill="white" fillOpacity="0.5"/>
-        <rect x="30" y="90" width="60" height="10" rx="3" fill="rgba(255,255,255,0.3)"/>
-    </svg>
-);
-
-const IllustrationQuickSongs = () => (
-    <svg width="240" height="60" viewBox="0 0 240 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="30" cy="30" r="20" fill="rgba(255,255,255,0.1)"/>
-        <text x="30" y="35" fontFamily="monospace" fontSize="12" fill="white" textAnchor="middle">4/4</text>
-        <circle cx="90" cy="30" r="20" fill="rgba(255,255,255,0.1)"/>
-        <text x="90" y="35" fontFamily="monospace" fontSize="12" fill="white" textAnchor="middle">3/4</text>
-        <circle cx="150" cy="30" r="20" fill="rgba(255,255,255,0.1)"/>
-        <text x="150" y="35" fontFamily="monospace" fontSize="12" fill="white" textAnchor="middle">7/8</text>
-        <circle cx="210" cy="30" r="20" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeDasharray="4 4"/>
-        <path d="M205 30H215" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round"/>
-        <path d="M210 25V35" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round"/>
-    </svg>
-);
-
-const IllustrationMixer = () => (
-    <svg width="240" height="80" viewBox="0 0 240 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="40" y="10" width="40" height="60" rx="8" fill="rgba(255,255,255,0.1)"/>
-        <rect x="40" y="30" width="40" height="40" rx="8" fill="var(--strong-beat-accent)"/>
-        <rect x="100" y="10" width="40" height="60" rx="8" fill="rgba(255,255,255,0.1)"/>
-        <rect x="100" y="40" width="40" height="30" rx="8" fill="var(--secondary-accent)"/>
-        <rect x="160" y="10" width="40" height="60" rx="8" fill="rgba(255,255,255,0.1)"/>
-        <rect x="160" y="20" width="40" height="50" rx="8" fill="rgba(255,255,255,0.5)"/>
-    </svg>
-);
-
-const IllustrationAccount = () => (
-    <svg width="240" height="100" viewBox="0 0 240 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M165 70C184.33 70 200 54.33 200 35C200 15.67 184.33 0 165 0C148.87 0 135.25 10.15 130.69 24.03C129.13 23.73 127.59 23.5 126 23.5C109.43 23.5 96 36.93 96 53.5C96 55.03 96.22 56.5 96.63 57.92C82.44 61.35 72 74.62 72 90H165C165 80.61 165 70 165 70Z" transform="translate(20, 5)" fill="rgba(255,255,255,0.1)"/>
-        <path d="M140 45 L160 25 L180 45" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-        <path d="M160 27 V 75" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-        <rect x="40" y="30" width="80" height="10" rx="3" fill="rgba(255,255,255,0.4)"/>
-        <rect x="40" y="50" width="80" height="10" rx="3" fill="rgba(255,255,255,0.3)"/>
-        <rect x="40" y="70" width="60" height="10" rx="3" fill="rgba(255,255,255,0.3)"/>
-    </svg>
-);
-
 
 const ManualSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <section className="mb-6">
@@ -126,67 +229,137 @@ const ManualModal: React.FC<ManualModalProps> = ({ onClose }) => {
 
                 <div className="w-full bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl p-5 flex flex-col">
                     
-                    <ManualSection title="Main Controls">
-                        <IllustrationWrapper><IllustrationMainControls /></IllustrationWrapper>
+                    <ManualSection title="BPM & Tempo">
+                        <IllustrationWrapper scale={0.8}>
+                            <ManualComponentWrapper>
+                                <div className="w-[340px]">
+                                    <BpmControlIllustration />
+                                </div>
+                            </ManualComponentWrapper>
+                        </IllustrationWrapper>
                         <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p><Em>BPM Control:</Em> Ajusta el tempo arrastrando la gran pantalla central. Usa los botones <Em>+</Em> y <Em>-</Em> para ajustes finos. <Em>Mantén presionado</Em> el número para escribir un valor. Si está habilitado en los ajustes, también puedes <Em>tocar la pantalla</Em> para establecer el tempo.</p>
-                            <p><Em>Controles de Ritmo:</Em> Los tres diales circulares debajo del BPM ajustan el ritmo. Arrastra hacia arriba/derecha para aumentar el valor, y hacia abajo/izquierda para disminuirlo. Controlan los <Em>Pulsos</Em> por compás, las <Em>Subdivisiones</Em> por pulso, y la cantidad de <Em>Swing</Em>.</p>
-                            <p><Em>Play/Pause:</Em> El gran botón circular en el centro inicia y detiene el metrónomo. Este botón se oculta cuando una lista de canciones está activa; en su lugar, usa la barra del reproductor inferior.</p>
+                            <p>Adjust the tempo by dragging the large central display. Use the <Em>+</Em> and <Em>-</Em> buttons for fine adjustments. <Em>Long-press</Em> the number to type in a value. If enabled in settings, you can also <Em>tap the display</Em> to set the tempo.</p>
                         </div>
                     </ManualSection>
 
+                    <ManualSection title="Rhythm & Playback">
+                         <IllustrationWrapper scale={0.8}>
+                            <ManualComponentWrapper>
+                                <div className="w-[340px]">
+                                    <RhythmPlayIllustration />
+                                </div>
+                            </ManualComponentWrapper>
+                        </IllustrationWrapper>
+                         <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                            <p><Em>Rhythm Controls:</Em> The three circular dials adjust the rhythm. Drag up/right to increase the value, and down/left to decrease. They control the <Em>Beats</Em> per measure, <Em>Subdivisions</Em> per beat, and the amount of <Em>Swing</Em>.</p>
+                            <p><Em>Play/Stop:</Em> The large button on the right starts and stops the metronome. This button is hidden when a setlist is active; use the bottom player bar instead.</p>
+                        </div>
+                    </ManualSection>
+                    
                     <ManualSection title="The Sequencer">
-                        <IllustrationWrapper><IllustrationSequencer /></IllustrationWrapper>
                         <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p>El secuenciador es un componente que se puede girar. La cara frontal muestra un editor simple de un solo compás, mientras que la parte posterior revela el potente Secuenciador Avanzado de múltiples compases.</p>
-                            <p><Em>Vista Simple:</Em> Crea un patrón tocando los pasos. Puedes cambiar entre una vista clásica de <Em>Rejilla</Em> y una vista circular de <Em>Anillo</Em> usando los botones de la parte inferior.</p>
-                            <p><Em>Vista Avanzada:</Em> Toca "Sec. Avanzado" para darle la vuelta. Aquí puedes construir una estructura de canción completa.
+                            <p>The sequencer is a flippable component. The front face shows a simple, single-measure editor, while the back reveals the powerful multi-measure Advanced Sequencer.</p>
+                        </div>
+                        
+                        <h4 className="text-base font-bold text-white mt-4 mb-2">Simple View: Grid</h4>
+                        <IllustrationWrapper scale={0.85}>
+                           <SequencerGridViewIllustration />
+                        </IllustrationWrapper>
+                         <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                             <p>Create a pattern by tapping the steps in a classic grid layout. Use the toggle at the top left to switch views.</p>
+                        </div>
+
+                        <h4 className="text-base font-bold text-white mt-4 mb-2">Simple View: Ring</h4>
+                        <IllustrationWrapper scale={0.85}>
+                           <SequencerRingViewIllustration />
+                        </IllustrationWrapper>
+                         <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                            <p>The <Em>Ring</Em> view provides a circular interface, which can be more intuitive for visualizing rhythmic cycles.</p>
+                        </div>
+
+                        <h4 className="text-base font-bold text-white mt-4 mb-2">Advanced Sequencer</h4>
+                        <IllustrationWrapper scale={0.85}>
+                           <SequencerAdvViewIllustration />
+                        </IllustrationWrapper>
+                        <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                            <p>Tap "Adv. Sequencer" to flip it over. Here, you can build a full song structure.
                                 <ul className="list-disc pl-5 mt-2 space-y-1">
-                                    <li>Toca un compás para seleccionarlo y editarlo. Sus parámetros (BPM, sonidos, etc.) y su patrón de pasos aparecerán a continuación.</li>
-                                    <li>Cuando se selecciona un solo compás, aparece un icono de <Em>Dado</Em>. Tócalo para generar un nuevo patrón aleatorio para ese compás específico.</li>
-                                    <li>Usa el botón de <Em>Editar</Em> para entrar en el modo de selección múltiple para eliminar o reordenar varios compases a la vez.</li>
-                                    <li>Habilita <Em>Compás de Entrada</Em> para añadir un compás de preparación, y <Em>Bucle</Em> para repetir la secuencia.</li>
+                                    <li>Tap a measure to select it for editing. Its parameters (BPM, sounds, etc.) and step pattern will appear below.</li>
+                                    <li>When a single measure is selected, a <Em>Dice</Em> icon appears. Tap it to generate a new random pattern for that specific measure.</li>
+                                    <li>Use the <Em>Edit</Em> button to enter multi-select mode for deleting or reordering multiple measures at once.</li>
+                                    <li>Enable <Em>Count In</Em> to add a preparatory measure, and <Em>Loop</Em> to repeat the sequence.</li>
                                 </ul>
                             </p>
                         </div>
                     </ManualSection>
                     
                     <ManualSection title="Setlists & Songs">
-                        <IllustrationWrapper><IllustrationSetlists /></IllustrationWrapper>
+                        <IllustrationWrapper scale={0.85}>
+                             <ManualComponentWrapper>
+                                <div className="w-[340px]">
+                                    <SetlistsIllustration />
+                                </div>
+                            </ManualComponentWrapper>
+                        </IllustrationWrapper>
                         <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p>Organiza tus canciones en listas para practicar o para tus presentaciones.</p>
-                            <p><Em>Gestionar Listas:</Em> Desde la lista principal, toca una lista para ver sus canciones. Usa el icono de <Em>Editar</Em> para renombrar, reordenar, duplicar o eliminar listas.</p>
-                            <p><Em>Gestionar Canciones:</Em> Dentro de una lista, toca una canción para cargarla. El botón de <Em>Play</Em> junto a una canción la cargará e iniciará la reproducción inmediatamente. Usa el icono de <Em>Editar</Em> para gestionar las canciones.</p>
-                            <p><Em>Barra de Reproducción:</Em> Cuando una lista está activa, aparece una barra de reproducción en la parte inferior para navegar fácilmente entre las canciones anteriores y siguientes de la lista.</p>
-                            <p><Em>Cambios sin Guardar:</Em> Si editas una canción cargada, aparecerán los botones de <Em>Guardar</Em> y <Em>Cancelar</Em>, permitiéndote confirmar tus cambios o revertirlos.</p>
+                            <p>Organize your songs into lists for practice or performance.</p>
+                            <p><Em>Manage Lists:</Em> From the main list view, tap a setlist to view its songs. Use the <Em>Edit</Em> icon to rename, reorder, duplicate, or delete setlists.</p>
+                            <p><Em>Manage Songs:</Em> Inside a setlist, tap a song to load it. The <Em>Play</Em> button next to a song will load it and immediately start playback. Use the <Em>Edit</Em> icon to manage songs.</p>
+                            <p><Em>Player Bar:</Em> When a setlist is active, a player bar appears at the bottom for easy navigation to the previous and next songs in the list.</p>
+                            <p><Em>Unsaved Changes:</Em> If you edit a loaded song, <Em>Save</Em> and <Em>Cancel</Em> buttons will appear, allowing you to commit your changes or revert them.</p>
                         </div>
                     </ManualSection>
 
                     <ManualSection title="Quick Songs">
-                        <IllustrationWrapper><IllustrationQuickSongs /></IllustrationWrapper>
+                        <IllustrationWrapper scale={0.85}>
+                            <ManualComponentWrapper>
+                                <div className="w-[340px] bg-[var(--container-bg)] p-4 rounded-3xl">
+                                    <QuickSongsIllustration />
+                                </div>
+                            </ManualComponentWrapper>
+                        </IllustrationWrapper>
                         <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p>La barra inferior proporciona acceso instantáneo a tus configuraciones favoritas y herramientas creativas.</p>
+                            <p>The bottom bar provides instant access to your favorite settings and creative tools.</p>
                             <ul className="list-disc pl-5 mt-2 space-y-2">
-                                <li><Em>Ranuras Principales:</Em> <Em>Toca brevemente</Em> una ranura existente para cargar su configuración. <Em>Mantén presionada</Em> cualquier ranura (vacía o llena) para guardar la configuración actual del metrónomo. Una barra de progreso radial mostrará el progreso del guardado.</li>
-                                <li><Em>Reiniciar:</Em> El icono de <Em>Casa</Em> a la izquierda del todo reinicia el metrónomo a su estado predeterminado.</li>
-                                <li><Em>Aleatorizar:</Em> El icono de <Em>Dado</Em> a la derecha del todo genera un ritmo completamente nuevo y aleatorio, incluyendo el compás y el patrón.</li>
+                                <li><Em>Main Slots:</Em> <Em>Short-tap</Em> an existing slot to load its settings. <Em>Long-press</Em> any slot (empty or full) to save the current metronome settings. A radial progress bar will show the save progress.</li>
+                                <li><Em>Reset:</Em> The <Em>Home</Em> icon on the far left resets the metronome to its default state.</li>
+                                <li><Em>Randomize:</Em> The <Em>Dice</Em> icon on the far right generates a completely new, random groove, including the time signature and pattern.</li>
                             </ul>
                         </div>
                     </ManualSection>
                     
                     <ManualSection title="Mixer & Sounds">
-                        <IllustrationWrapper><IllustrationMixer /></IllustrationWrapper>
+                        <IllustrationWrapper scale={0.9}>
+                            <ManualComponentWrapper>
+                                <div className="w-[300px] p-4">
+                                    <MixerIllustration />
+                                </div>
+                            </ManualComponentWrapper>
+                        </IllustrationWrapper>
+                        <IllustrationWrapper scale={0.9}>
+                            <ManualComponentWrapper>
+                                <div className="w-[300px] p-4">
+                                    <SoundsIllustration />
+                                </div>
+                            </ManualComponentWrapper>
+                        </IllustrationWrapper>
                         <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p>Toca los botones de <Em>Mezcla</Em> y <Em>Sonidos</Em> para revelar paneles para ajustar el audio.</p>
-                            <p><Em>Panel de Mezcla:</Em> Ajusta el volumen de los pulsos de <Em>Acento</Em>, las <Em>Subdivisiones</Em>, y el volumen <Em>Maestro</Em> general.</p>
-                            <p><Em>Panel de Sonidos:</Em> Elige diferentes kits de sonido para el Pulso principal y los clics de Subdivisión de forma independiente.</p>
+                            <p>Tap the <Em>Mixer</Em> and <Em>Sounds</Em> buttons to reveal panels for adjusting the audio.</p>
+                            <p><Em>Mixer Panel:</Em> Adjust the volume for <Em>Accent</Em> beats, <Em>Subdivisions</Em>, and the overall <Em>Master</Em> volume.</p>
+                            <p><Em>Sounds Panel:</Em> Choose different sound kits for the main Beat and Subdivision clicks independently.</p>
                         </div>
                     </ManualSection>
 
                     <ManualSection title="Account & Syncing">
-                        <IllustrationWrapper><IllustrationAccount /></IllustrationWrapper>
+                        <IllustrationWrapper scale={0.85}>
+                           <ManualComponentWrapper>
+                                <div className="w-[340px]">
+                                    <AccountIllustration />
+                                </div>
+                            </ManualComponentWrapper>
+                        </IllustrationWrapper>
                         <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p>Crea una cuenta gratuita para hacer una copia de seguridad y sincronizar tus listas de canciones y configuraciones en todos tus dispositivos. Accede a tu cuenta desde la página de <Em>Ajustes</Em>.</p>
+                            <p>Create a free account to back up and sync your setlists and settings across all your devices. Access your account from the <Em>Settings</Em> page.</p>
                         </div>
                     </ManualSection>
 
