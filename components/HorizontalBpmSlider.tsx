@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { MIN_BPM, MAX_BPM } from '../constants';
 import { useMetronome } from '../contexts/MetronomeContext';
-import { PlayIcon, PauseIcon, BpmMinusIcon, BpmPlusIcon } from './Icons';
+// FIX: Removed unused 'PlayIcon' and non-existent 'PauseIcon' from imports.
+import { BpmMinusIcon, BpmPlusIcon } from './Icons';
 
 interface BpmControlProps {
   isShrunk?: boolean;

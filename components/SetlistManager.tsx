@@ -8,7 +8,7 @@ import { useMetronome } from '../contexts/MetronomeContext';
 import { 
     DragHandleIcon,
     SetlistPlayIcon,
-    StopIcon,
+    SmallStopIcon,
     TrashIcon,
     PlusIcon,
     EditIcon,
@@ -511,7 +511,7 @@ const SetlistManager: React.FC<SetlistManagerProps> = (props) => {
                                                 })()}
                                                 <span className="text-sm text-gray-400 font-mono w-16 text-right tabular-nums">{bpm} BPM</span>
                                                 <button onClick={(e) => {e.stopPropagation(); isPlaying ? handleStop() : handleLoadAndPlay(song, activeSetlistId as string)}} className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isPlaying ? 'bg-green-500 text-white hover:bg-green-400' : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white'}`} aria-label={isPlaying ? 'Stop' : 'Play'}>
-                                                    {isPlaying ? <StopIcon /> : <SetlistPlayIcon />}
+                                                    {isPlaying ? <SmallStopIcon /> : <SetlistPlayIcon />}
                                                 </button>
                                             </div>
                                         )}

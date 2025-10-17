@@ -20,7 +20,7 @@ import {
     MixerIcon, 
     SoundIcon, 
     PlayIcon,
-    PauseIcon
+    StopIcon
 } from './components/Icons';
 import Storybook from './components/Storybook';
 
@@ -204,9 +204,9 @@ const AppContent: React.FC = () => {
                           onClick={togglePlay}
                           disabled={isEditingSequence || !!activeSetlistId}
                           className={`w-full h-full flex items-center justify-center bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl transition-all duration-300 ease-in-out ${isPlaying ? 'bg-gray-400 text-black' : 'bg-white/20 hover:enabled:bg-white/30 text-white'} disabled:cursor-not-allowed ${!!activeSetlistId ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}`}
-                          aria-label={isPlaying ? 'Pause' : 'Play'}
+                          aria-label={isPlaying ? 'Stop' : 'Play'}
                       >
-                          {isPlaying ? <PauseIcon /> : <PlayIcon />}
+                          {isPlaying ? <StopIcon /> : <PlayIcon />}
                       </button>
                   </div>
               </div>

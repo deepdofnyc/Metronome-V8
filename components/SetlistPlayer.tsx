@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { type PlaylistItem } from '../types';
 import { useMetronome } from '../contexts/MetronomeContext';
-import { PlayerPauseIcon, PlayerPlayIcon, SongNextIcon, SongPrevIcon } from './Icons';
+import { PlayerStopIcon, PlayerPlayIcon, SongNextIcon, SongPrevIcon } from './Icons';
 
 interface SetlistPlayerProps {
     isUiDisabled?: boolean;
@@ -63,9 +63,9 @@ const SetlistPlayer: React.FC<SetlistPlayerProps> = ({ isUiDisabled = false }) =
             <div className="w-full max-w-[380px] mx-auto flex items-stretch text-white" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px))' }}>
                 <button onClick={handlePrevSong} disabled={!canGoPrevSong || isUiDisabled} className="w-[30%] flex items-center justify-center p-2 transition-colors hover:enabled:bg-white/10 disabled:text-white/30" aria-label="Previous song"><SongPrevIcon /></button>
                 <div className="w-px bg-[var(--container-border)] opacity-50 my-3"></div>
-                <button onClick={onPlayPause} disabled={!canPlay || isUiDisabled} className="w-[40%] flex flex-col items-center justify-center p-2 min-w-0 transition-colors hover:enabled:bg-white/10 disabled:opacity-50" aria-label={isPlaying ? "Pause" : "Play"}>
+                <button onClick={onPlayPause} disabled={!canPlay || isUiDisabled} className="w-[40%] flex flex-col items-center justify-center p-2 min-w-0 transition-colors hover:enabled:bg-white/10 disabled:opacity-50" aria-label={isPlaying ? "Stop" : "Play"}>
                     <span className="text-xs text-white/80 mb-1 truncate w-full text-center">{activeSetlist?.name ?? ''}</span>
-                    {isPlaying ? <PlayerPauseIcon/> : <PlayerPlayIcon/>}
+                    {isPlaying ? <PlayerStopIcon/> : <PlayerPlayIcon/>}
                     <span className="text-sm text-white mt-1 truncate w-full text-center">{currentSongName}</span>
                 </button>
                 <div className="w-px bg-[var(--container-border)] opacity-50 my-3"></div>
