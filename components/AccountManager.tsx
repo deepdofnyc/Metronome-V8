@@ -60,7 +60,7 @@ interface AccountManagerProps {
 
 const AccountManager: React.FC<AccountManagerProps> = ({ onBack }) => {
     const { user, signOut } = useAuth();
-    const [view, setView] = useState<'options' | 'login' | 'signup' | 'forgot-password'>(user ? 'options' : 'login');
+    const [view, setView] = useState<'options' | 'login' | 'signup' | 'forgot-password'>(user ? 'options' : 'options');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -70,8 +70,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({ onBack }) => {
         if (user) {
             setView('options');
         } else {
-            // If user logs out while this component is mounted, switch to login view.
-            if(view === 'options') setView('login');
+            // If user logs out while this component is mounted, switch to options view.
+            if(view === 'options' && !user) setView('options');
         }
     }, [user, view]);
 
@@ -137,8 +137,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({ onBack }) => {
     };
 
     const handleBack = () => {
-        if (!user && (view === 'login' || view === 'signup')) {
-            onBack();
+        if (view === 'login' || view === 'signup') {
+            handleViewChange('options');
         } else if (view === 'forgot-password') {
             handleViewChange('login');
         } else {
@@ -152,6 +152,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({ onBack }) => {
             case 'login': return 'Login';
             case 'signup': return 'Create Account';
             case 'forgot-password': return 'Reset Password';
+            case 'options':
             default: return 'Account';
         }
     };
@@ -180,6 +181,24 @@ const AccountManager: React.FC<AccountManagerProps> = ({ onBack }) => {
                             {isLoading ? <LoadingSpinner /> : 'Logout'}
                         </button>
                     </div>
+                 ) : view === 'options' ? (
+                    <div className="space-y-3">
+                        <p className="text-center text-white/70 text-sm mb-4">
+                            Sign in to sync your setlists and settings across devices.
+                        </p>
+                        <button 
+                            onClick={() => handleViewChange('login')}
+                            className="w-full h-12 flex items-center justify-center bg-[var(--primary-accent)] text-black font-bold rounded-xl hover:bg-[var(--primary-accent-dark)] transition-colors"
+                        >
+                            Login
+                        </button>
+                        <button 
+                            onClick={() => handleViewChange('signup')}
+                            className="w-full h-12 flex items-center justify-center bg-black/25 text-white font-bold rounded-xl hover:bg-white/10 transition-colors"
+                        >
+                            Sign Up
+                        </button>
+                    </div>
                 ) : view === 'login' ? (
                     <form className="space-y-4" onSubmit={handleFormSubmit}>
                         <AuthInput icon={<EmailIcon />} type="email" placeholder="Email" id="login-email" name="email" disabled={isLoading} value={credentials.email} onChange={handleInputChange} />
@@ -187,20 +206,21 @@ const AccountManager: React.FC<AccountManagerProps> = ({ onBack }) => {
                         
                         {error && <p className="text-red-400 text-sm text-center !mt-3">{error}</p>}
 
-                        <div className="space-y-3 !mt-5">
-                            <button type="submit" disabled={isLoading} className="w-full h-12 flex items-center justify-center bg-[var(--primary-accent)] text-black font-bold rounded-xl hover:bg-[var(--primary-accent-dark)] transition-colors disabled:opacity-60 disabled:cursor-wait">
-                                {isLoading ? <LoadingSpinner /> : 'Login'}
-                            </button>
-                             <button type="button" disabled={isLoading} onClick={() => handleViewChange('signup')} className="w-full py-3 bg-black/25 text-white font-bold rounded-xl hover:bg-white/10 transition-colors disabled:opacity-50">
-                                Create an Account
-                            </button>
-                        </div>
+                        <button type="submit" disabled={isLoading} className="w-full h-12 flex items-center justify-center bg-[var(--primary-accent)] text-black font-bold rounded-xl hover:bg-[var(--primary-accent-dark)] transition-colors disabled:opacity-60 disabled:cursor-wait">
+                            {isLoading ? <LoadingSpinner /> : 'Login'}
+                        </button>
 
                         <SocialLogins onSocialLogin={handleSocialLogin} disabled={isLoading} />
 
                         <div className="text-center text-sm">
                             <button type="button" disabled={isLoading} onClick={() => handleViewChange('forgot-password')} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50">
                                 Forgot Password?
+                            </button>
+                        </div>
+                        <div className="text-center text-sm">
+                            <span className="text-white/70">No account? </span>
+                            <button type="button" disabled={isLoading} onClick={() => handleViewChange('signup')} className="font-bold text-[var(--primary-accent)] hover:text-[var(--primary-accent-dark)] transition-colors disabled:opacity-50">
+                                Sign Up
                             </button>
                         </div>
                     </form>

@@ -12,6 +12,11 @@ const isInStandaloneMode = () => {
   return ('standalone' in window.navigator) && ((window.navigator as any).standalone === true);
 };
 
+const isNative = () => {
+  // Checks if the app is running in a native Capacitor container
+  return typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform();
+}
+
 const ShareIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline-block mx-1 -mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
@@ -25,7 +30,7 @@ const AddToHomeScreenPrompt: React.FC = () => {
     // Show the prompt only if it's an iOS device, not in standalone mode,
     // and the user hasn't dismissed it before in this session.
     const hasDismissed = sessionStorage.getItem('dismissedA2HSPrompt');
-    if (isIOS() && !isInStandaloneMode() && !hasDismissed) {
+    if (isIOS() && !isInStandaloneMode() && !hasDismissed && !isNative()) {
       setIsVisible(true);
     }
   }, []);
