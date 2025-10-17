@@ -1,4 +1,3 @@
-
 /**
  * @file AuthContext.tsx
  * @description Provides a global authentication context for the entire application.
@@ -16,6 +15,7 @@ interface AuthContextType {
     user: User | null;
     signOut: () => Promise<void>;
     loading: boolean;
+    refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,6 +50,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             subscription?.unsubscribe();
         };
     }, []);
+    
+    const refreshSession = async () => {
+        if (!supabase) return;
+        const { data: { session: newSession } } = await supabase.auth.getSession();
+        setSession(newSession);
+    };
 
     const value = {
         session,
@@ -59,6 +65,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await authLogout();
         },
         loading,
+        refreshSession,
     };
 
     return (

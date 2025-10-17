@@ -56,3 +56,21 @@ export const DiceIcon = ({ className = "h-8 w-8" }: { className?: string }) => (
 export const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>;
 export const EmailIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" /><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" /></svg>;
 export const PasswordIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L4.257 19.743A2 2 0 112.257 17.743l6.002-6.002A6 6 0 1118 8zm-6-4a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" /></svg>;
+export const ShieldCheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM9 13.09l-3.293-3.293a1 1 0 011.414-1.414L9 10.263l4.879-4.879a1 1 0 111.414 1.414L9 13.09z" clipRule="evenodd" /></svg>;
+
+export const GoogleIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 65.58 66.92" xmlns="http://www.w3.org/2000/svg">
+        <g>
+            <path fill="#4285F4" d="M65.58,34.22c0-2.37-.21-4.65-.61-6.84h-31.51v12.94h18.01c-.78,4.18-3.13,7.73-6.68,10.1v8.4h10.81c6.33-5.82,9.98-14.4,9.98-24.59Z"/>
+            <path fill="#34A853" d="M33.46,66.92c9.03,0,16.61-3,22.14-8.11l-10.81-8.4c-3,2.01-6.83,3.19-11.33,3.19-8.71,0-16.09-5.89-18.72-13.79H3.56v8.67c5.51,10.94,16.82,18.43,29.9,18.43Z"/>
+            <path fill="#FBBC05" d="M14.74,39.82c-.67-2.01-1.05-4.15-1.05-6.36s.38-4.35,1.05-6.36v-8.67H3.56c-2.27,4.52-3.56,9.63-3.56,15.03s1.29,10.51,3.56,15.03l11.18-8.67Z"/>
+            <path fill="#EA4335" d="M33.46,13.31c4.91,0,9.32,1.69,12.79,5l9.6-9.6C50.05,3.32,42.48,0,33.46,0,20.38,0,9.06,7.5,3.56,18.43l11.18,8.67c2.63-7.91,10.01-13.79,18.72-13.79Z"/>
+        </g>
+    </svg>
+);
+
+export const AppleIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 56.8 67.59" xmlns="http://www.w3.org/2000/svg">
+        <path fill="currentColor" d="M47.49,35.72c-.03-5.54,2.47-9.72,7.54-12.8-2.84-4.06-7.12-6.29-12.78-6.73-5.36-.42-11.21,3.12-13.35,3.12-2.26,0-7.45-2.97-11.53-2.97-8.42.14-17.37,6.71-17.37,20.1,0,3.95.72,8.04,2.17,12.25,1.93,5.54,8.9,19.12,16.18,18.89,3.8-.09,6.49-2.7,11.44-2.7s7.29,2.7,11.53,2.7c7.33-.11,13.64-12.45,15.48-18-9.84-4.63-9.31-13.58-9.31-13.87ZM38.95,10.94c4.12-4.89,3.74-9.34,3.62-10.94-3.64.21-7.85,2.47-10.25,5.27-2.64,2.99-4.2,6.68-3.86,10.85,3.94.3,7.53-1.72,10.49-5.18Z"/>
+    </svg>
+);
