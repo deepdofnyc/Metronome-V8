@@ -1,7 +1,6 @@
 # Pulse Q Metronome - Database Schema Documentation
 
-## Overview
-Database schema for a web-based metronome application with user authentication, settings persistence, setlists, songs, and quick-access slots. Built for Supabase/PostgreSQL.
+### Note: This is a generated draft meant guide the setup process. The following is suggested and might not be accurate. Needs to be reviewed and verified
 
 ## Database Structure
 
