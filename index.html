@@ -399,6 +399,47 @@
       .animate-spin-dice {
         animation: spin-dice-effect 500ms ease-out;
       }
+
+      /* Walkthrough Styles */
+      .walkthrough-overlay {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0,0,0,0.7);
+        z-index: 2000;
+        transition: opacity 0.3s ease-in-out;
+      }
+      .walkthrough-highlight-box {
+        position: fixed;
+        border-radius: 28px;
+        box-shadow: 0 0 0 9999px rgba(0,0,0,0.7);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+      }
+      .walkthrough-highlighted-element {
+        position: relative;
+        z-index: 2001;
+        /* Glow effect removed for a cleaner 'spotlight' look */
+        border-radius: inherit;
+      }
+      .walkthrough-bubble {
+        position: fixed;
+        width: calc(100% - 32px);
+        max-width: 320px;
+        background-color: var(--container-bg);
+        color: var(--text-primary);
+        padding: 1rem 1.25rem;
+        border-radius: 24px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        z-index: 2002;
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
+        border: 1px solid var(--container-border);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity: 0;
+      }
+      .walkthrough-bubble.visible {
+        opacity: 1;
+      }
     </style>
   <script type="importmap">
 {

@@ -1,4 +1,5 @@
 
+
 import React, { useMemo, type ReactNode } from 'react';
 import { ChevronLeftIcon, PlayIcon } from './Icons';
 // FIX: Import `useMetronome` to resolve 'Cannot find name' errors.
@@ -218,204 +219,211 @@ const Em: React.FC<{children: React.ReactNode}> = ({children}) => <span classNam
 
 const ManualModal: React.FC<ManualModalProps> = ({ onClose }) => {
     return (
-        <main className="flex-1 w-full overflow-y-auto animate-panel">
-            <div className="w-full max-w-[380px] mx-auto flex flex-col gap-4 px-[15px] py-4" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)'}}>
-                
-                <header className="w-full h-10 flex items-center justify-between sticky top-0 bg-[var(--bg-color)]/80 backdrop-blur-sm z-10 -mt-2 pt-2">
-                    <button onClick={onClose} className="p-2 -m-2 rounded-full hover:bg-white/10 transition-colors" aria-label="Back to metronome">
-                        <ChevronLeftIcon />
-                    </button>
-                    <h2 className="text-xl font-bold">User Manual</h2>
-                    <div className="w-6" /> {/* Spacer for centering title */}
-                </header>
+        <div 
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={onClose}
+        >
+            <div 
+                className="w-full max-w-[380px] max-h-full overflow-y-auto animate-panel rounded-3xl bg-[var(--bg-color)]" 
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="flex flex-col gap-4 px-[15px] py-4">
+                    <header className="w-full h-10 flex items-center justify-between sticky top-0 bg-[var(--bg-color)]/80 backdrop-blur-sm z-10 -mt-2 pt-2">
+                        <button onClick={onClose} className="p-2 -m-2 rounded-full hover:bg-white/10 transition-colors" aria-label="Back to metronome">
+                            <ChevronLeftIcon />
+                        </button>
+                        <h2 className="text-xl font-bold">User Manual</h2>
+                        <div className="w-6" /> {/* Spacer for centering title */}
+                    </header>
 
-                <div className="w-full bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl p-5 flex flex-col">
-                    
-                    <ManualSection title="Tempo Editor (BPM)">
-                        <IllustrationWrapper scale={0.8}>
-                            <ManualComponentWrapper>
-                                <div className="w-[340px]">
-                                    <BpmControlIllustration />
-                                </div>
-                            </ManualComponentWrapper>
-                        </IllustrationWrapper>
-                        <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p>At the top of the interface, you’ll find the Tempo Editor, which combines several ways to control the BPM:</p>
-                            <ul className="list-disc pl-5 mt-2 space-y-1">
-                                <li>Drag the <Em>slider</Em> to change the tempo smoothly.</li>
-                                <li>Use the <Em>+</Em> and <Em>–</Em> buttons for fine adjustments.</li>
-                                <li><Em>Long-press</Em> the BPM number to type an exact value.</li>
-                                <li>You can also tap the number multiple times to use the <Em>tap-tempo</Em> feature (if enabled in Settings).</li>
-                            </ul>
-                        </div>
-                    </ManualSection>
-
-                    <ManualSection title="Rhythm Controls">
-                         <IllustrationWrapper scale={0.8}>
-                            <ManualComponentWrapper>
-                                <div className="w-[300px]">
-                                    <RhythmControlsIllustration />
-                                </div>
-                            </ManualComponentWrapper>
-                        </IllustrationWrapper>
-                         <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p>The three circular dials define your rhythm setup:</p>
-                             <ul className="list-disc pl-5 mt-2 space-y-1">
-                                <li><Em>Beats:</Em> horizontal steps in the sequencer.</li>
-                                <li><Em>Subdivisions:</Em> vertical divisions inside each beat.</li>
-                                <li><Em>Swing:</Em> adds a shuffle feel to the rhythm.</li>
-                            </ul>
-                            <p>Slide up/right to increase values, down/left to decrease.</p>
-                        </div>
-                    </ManualSection>
-                    
-                    <ManualSection title="Play/Stop Button">
-                        <IllustrationWrapper scale={0.8}>
-                            <PlayStopIllustration />
-                        </IllustrationWrapper>
-                        <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p>This button starts and stops the metronome with a single tap.</p>
-                            <p>When a Setlist is active, this button is hidden and replaced by the bottom playback bar.</p>
-                        </div>
-                    </ManualSection>
-
-                    <ManualSection title="Standard Sequencer">
-                        <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p>This section lets you create rhythm patterns and view them in two modes:</p>
-                            <ul className="list-disc pl-5 mt-2 space-y-1">
-                                <li><Em>Grid View:</Em> classic step-by-step horizontal layout.</li>
-                                <li><Em>Ring View:</Em> circular visualization of the rhythm cycle.</li>
-                            </ul>
-                             <IllustrationWrapper scale={0.85}>
-                               <SequencerGridViewIllustration />
+                    <div className="w-full bg-[var(--container-bg)] backdrop-blur-lg border border-[var(--container-border)] rounded-3xl p-5 flex flex-col">
+                        
+                        <ManualSection title="Tempo Editor (BPM)">
+                            <IllustrationWrapper scale={0.8}>
+                                <ManualComponentWrapper>
+                                    <div className="w-[340px]">
+                                        <BpmControlIllustration />
+                                    </div>
+                                </ManualComponentWrapper>
                             </IllustrationWrapper>
-                             <IllustrationWrapper scale={0.85}>
-                               <SequencerRingViewIllustration />
+                            <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                                <p>At the top of the interface, you’ll find the Tempo Editor, which combines several ways to control the BPM:</p>
+                                <ul className="list-disc pl-5 mt-2 space-y-1">
+                                    <li>Drag the <Em>slider</Em> to change the tempo smoothly.</li>
+                                    <li>Use the <Em>+</Em> and <Em>–</Em> buttons for fine adjustments.</li>
+                                    <li><Em>Long-press</Em> the BPM number to type an exact value.</li>
+                                    <li>You can also tap the number multiple times to use the <Em>tap-tempo</Em> feature (if enabled in Settings).</li>
+                                </ul>
+                            </div>
+                        </ManualSection>
+
+                        <ManualSection title="Rhythm Controls">
+                            <IllustrationWrapper scale={0.8}>
+                                <ManualComponentWrapper>
+                                    <div className="w-[300px]">
+                                        <RhythmControlsIllustration />
+                                    </div>
+                                </ManualComponentWrapper>
                             </IllustrationWrapper>
-                            <p>Both views display the same pattern—only the layout changes.</p>
-                            <p>Each step in the sequencer has one of four color-coded states:</p>
-                             <ul className="list-disc pl-5 mt-2 space-y-1">
-                                <li><span className="font-bold" style={{color: 'var(--strong-beat-accent)'}}>🟧 Orange:</span> strong accent.</li>
-                                <li><span className="font-bold" style={{color: 'var(--primary-accent)'}}>🟩 Green:</span> regular beat.</li>
-                                <li><span className="font-bold" style={{color: 'var(--secondary-accent)'}}>🟪 Purple:</span> subdivision.</li>
-                                <li><span className="font-bold text-gray-400">⚪ Gray:</span> muted (no sound).</li>
-                            </ul>
-                            <p>Tap any step to cycle through its states. Volumes for each type can be customized in the Mixer.</p>
-                        </div>
-                    </ManualSection>
-                    
-                    <ManualSection title="Advanced Sequencer">
-                        <IllustrationWrapper scale={0.85}>
-                           <SequencerAdvViewIllustration />
-                        </IllustrationWrapper>
-                        <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p>This mode lets you create a sequence of multiple measures, each with its own pattern.</p>
-                            <ul className="list-disc pl-5 mt-2 space-y-1">
-                                <li>Tap the <Em>“Advanced Seq.”</Em> button to activate.</li>
-                                <li>Each measure appears as a circle—tap to edit.</li>
-                                <li>You can adjust beats, subdivisions, swing, and the step pattern.</li>
-                                <li>Enable <Em>Loop</Em> to repeat the full sequence.</li>
-                                <li>Enable <Em>Count In</Em> to add a preparatory measure.</li>
-                                <li>Use <Em>Edit</Em> to remove, duplicate, or reorder multiple measures.</li>
-                                <li>Tap the <Em>🎲 “Dice”</Em> to randomize a selected measure.</li>
-                            </ul>
-                        </div>
-                    </ManualSection>
+                            <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                                <p>The three circular dials define your rhythm setup:</p>
+                                <ul className="list-disc pl-5 mt-2 space-y-1">
+                                    <li><Em>Beats:</Em> horizontal steps in the sequencer.</li>
+                                    <li><Em>Subdivisions:</Em> vertical divisions inside each beat.</li>
+                                    <li><Em>Swing:</Em> adds a shuffle feel to the rhythm.</li>
+                                </ul>
+                                <p>Slide up/right to increase values, down/left to decrease.</p>
+                            </div>
+                        </ManualSection>
+                        
+                        <ManualSection title="Play/Stop Button">
+                            <IllustrationWrapper scale={0.8}>
+                                <PlayStopIllustration />
+                            </IllustrationWrapper>
+                            <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                                <p>This button starts and stops the metronome with a single tap.</p>
+                                <p>When a Setlist is active, this button is hidden and replaced by the bottom playback bar.</p>
+                            </div>
+                        </ManualSection>
 
-                    <ManualSection title="Quick Songs">
-                        <IllustrationWrapper scale={0.85}>
+                        <ManualSection title="Standard Sequencer">
+                            <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                                <p>This section lets you create rhythm patterns and view them in two modes:</p>
+                                <ul className="list-disc pl-5 mt-2 space-y-1">
+                                    <li><Em>Grid View:</Em> classic step-by-step horizontal layout.</li>
+                                    <li><Em>Ring View:</Em> circular visualization of the rhythm cycle.</li>
+                                </ul>
+                                <IllustrationWrapper scale={0.85}>
+                                <SequencerGridViewIllustration />
+                                </IllustrationWrapper>
+                                <IllustrationWrapper scale={0.85}>
+                                <SequencerRingViewIllustration />
+                                </IllustrationWrapper>
+                                <p>Both views display the same pattern—only the layout changes.</p>
+                                <p>Each step in the sequencer has one of four color-coded states:</p>
+                                <ul className="list-disc pl-5 mt-2 space-y-1">
+                                    <li><span className="font-bold" style={{color: 'var(--strong-beat-accent)'}}>🟧 Orange:</span> strong accent.</li>
+                                    <li><span className="font-bold" style={{color: 'var(--primary-accent)'}}>🟩 Green:</span> regular beat.</li>
+                                    <li><span className="font-bold" style={{color: 'var(--secondary-accent)'}}>🟪 Purple:</span> subdivision.</li>
+                                    <li><span className="font-bold text-gray-400">⚪ Gray:</span> muted (no sound).</li>
+                                </ul>
+                                <p>Tap any step to cycle through its states. Volumes for each type can be customized in the Mixer.</p>
+                            </div>
+                        </ManualSection>
+                        
+                        <ManualSection title="Advanced Sequencer">
+                            <IllustrationWrapper scale={0.85}>
+                            <SequencerAdvViewIllustration />
+                            </IllustrationWrapper>
+                            <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                                <p>This mode lets you create a sequence of multiple measures, each with its own pattern.</p>
+                                <ul className="list-disc pl-5 mt-2 space-y-1">
+                                    <li>Tap the <Em>“Advanced Seq.”</Em> button to activate.</li>
+                                    <li>Each measure appears as a circle—tap to edit.</li>
+                                    <li>You can adjust beats, subdivisions, swing, and the step pattern.</li>
+                                    <li>Enable <Em>Loop</Em> to repeat the full sequence.</li>
+                                    <li>Enable <Em>Count In</Em> to add a preparatory measure.</li>
+                                    <li>Use <Em>Edit</Em> to remove, duplicate, or reorder multiple measures.</li>
+                                    <li>Tap the <Em>🎲 “Dice”</Em> to randomize a selected measure.</li>
+                                </ul>
+                            </div>
+                        </ManualSection>
+
+                        <ManualSection title="Quick Songs">
+                            <IllustrationWrapper scale={0.85}>
+                                <ManualComponentWrapper>
+                                    <div className="w-[340px] bg-[var(--container-bg)] p-4 rounded-3xl">
+                                        <QuickSongsIllustration />
+                                    </div>
+                                </ManualComponentWrapper>
+                            </IllustrationWrapper>
+                            <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                                <p>Located at the bottom of the sequencer, these slots let you save and instantly recall your favorite presets.</p>
+                                <ul className="list-disc pl-5 mt-2 space-y-2">
+                                    <li><Em>Long-press</Em> to save the current configuration.</li>
+                                    <li><Em>Tap</Em> a slot to load.</li>
+                                    <li>The <Em>🏠 “Home”</Em> icon resets the pattern to default.</li>
+                                    <li>The <Em>🎲 “Dice”</Em> icon generates a random rhythm (time signature and pattern).</li>
+                                </ul>
+                                <p>Up to 3 quick presets can be stored.</p>
+                            </div>
+                        </ManualSection>
+
+                        <ManualSection title="Setlists">
+                            <IllustrationWrapper scale={0.85}>
+                                <ManualComponentWrapper>
+                                    <div className="w-[340px]">
+                                        <SetlistsIllustration />
+                                    </div>
+                                </ManualComponentWrapper>
+                            </IllustrationWrapper>
+                            <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                                <p>Group multiple patterns into named lists for practice or performance.</p>
+                                <ul className="list-disc pl-5 mt-2 space-y-1">
+                                    <li>Tap a list to open its songs.</li>
+                                    <li>Use <Em>Edit</Em> to rename, duplicate, or reorder lists or songs.</li>
+                                    <li>When a song is loaded, a playback bar appears at the bottom.</li>
+                                    <li>If changes are made to a loaded song, <Em>Save</Em> and <Em>Cancel</Em> buttons will appear.</li>
+                                </ul>
+                            </div>
+                        </ManualSection>
+                        
+                        <ManualSection title="Mixer & Sounds">
+                            <IllustrationWrapper scale={0.9}>
+                                <ManualComponentWrapper>
+                                    <div className="w-[300px] p-4">
+                                        <MixerIllustration />
+                                    </div>
+                                </ManualComponentWrapper>
+                            </IllustrationWrapper>
+                            <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                                <p><Em>Mixer:</Em> Adjust volume levels for accented beats, subdivisions, and the master volume.</p>
+                            </div>
+                            <IllustrationWrapper scale={0.9}>
+                                <ManualComponentWrapper>
+                                    <div className="w-[300px] p-4">
+                                        <SoundsIllustration />
+                                    </div>
+                                </ManualComponentWrapper>
+                            </IllustrationWrapper>
+                            <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                                <p><Em>Sounds:</Em> Choose from 3 kits for beats and 3 for subdivisions—independently.</p>
+                                <p>This allows full customization of the metronome’s sound.</p>
+                            </div>
+                        </ManualSection>
+
+                        <ManualSection title="Settings & Personalization">
+                            <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                                <p>In the Settings menu, you can:</p>
+                                <ul className="list-disc pl-5 mt-2 space-y-1">
+                                    <li>Log in with Google or Apple.</li>
+                                    <li>Hide interface components (Quick Songs, Setlists, Tap Tempo, etc.) for a cleaner layout.</li>
+                                    <li>Set custom minimum and maximum BPM values.</li>
+                                    <li>Re-download the demo setlist.</li>
+                                    <li>Access tutorials and this manual.</li>
+                                    <li>Use the <Em>Danger Zone</Em> to reset the app to its default state.</li>
+                                </ul>
+                                <p>You can also enable tap-tempo, cloud sync, and account management features.</p>
+                            </div>
+                        </ManualSection>
+
+                        <ManualSection title="Account & Sync">
+                            <IllustrationWrapper scale={0.85}>
                             <ManualComponentWrapper>
-                                <div className="w-[340px] bg-[var(--container-bg)] p-4 rounded-3xl">
-                                    <QuickSongsIllustration />
-                                </div>
-                            </ManualComponentWrapper>
-                        </IllustrationWrapper>
-                        <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p>Located at the bottom of the sequencer, these slots let you save and instantly recall your favorite presets.</p>
-                            <ul className="list-disc pl-5 mt-2 space-y-2">
-                                <li><Em>Long-press</Em> to save the current configuration.</li>
-                                <li><Em>Tap</Em> a slot to load.</li>
-                                <li>The <Em>🏠 “Home”</Em> icon resets the pattern to default.</li>
-                                <li>The <Em>🎲 “Dice”</Em> icon generates a random rhythm (time signature and pattern).</li>
-                            </ul>
-                            <p>Up to 3 quick presets can be stored.</p>
-                        </div>
-                    </ManualSection>
+                                    <div className="w-[340px]">
+                                        <AccountIllustration />
+                                    </div>
+                                </ManualComponentWrapper>
+                            </IllustrationWrapper>
+                            <div className="space-y-3 text-white/90 text-base leading-relaxed">
+                                <p>Create a free account to back up and sync your lists and configurations across all your devices.</p>
+                            </div>
+                        </ManualSection>
 
-                    <ManualSection title="Setlists">
-                        <IllustrationWrapper scale={0.85}>
-                             <ManualComponentWrapper>
-                                <div className="w-[340px]">
-                                    <SetlistsIllustration />
-                                </div>
-                            </ManualComponentWrapper>
-                        </IllustrationWrapper>
-                        <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p>Group multiple patterns into named lists for practice or performance.</p>
-                            <ul className="list-disc pl-5 mt-2 space-y-1">
-                                <li>Tap a list to open its songs.</li>
-                                <li>Use <Em>Edit</Em> to rename, duplicate, or reorder lists or songs.</li>
-                                <li>When a song is loaded, a playback bar appears at the bottom.</li>
-                                <li>If changes are made to a loaded song, <Em>Save</Em> and <Em>Cancel</Em> buttons will appear.</li>
-                            </ul>
-                        </div>
-                    </ManualSection>
-                    
-                    <ManualSection title="Mixer & Sounds">
-                        <IllustrationWrapper scale={0.9}>
-                            <ManualComponentWrapper>
-                                <div className="w-[300px] p-4">
-                                    <MixerIllustration />
-                                </div>
-                            </ManualComponentWrapper>
-                        </IllustrationWrapper>
-                        <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                             <p><Em>Mixer:</Em> Adjust volume levels for accented beats, subdivisions, and the master volume.</p>
-                        </div>
-                        <IllustrationWrapper scale={0.9}>
-                            <ManualComponentWrapper>
-                                <div className="w-[300px] p-4">
-                                    <SoundsIllustration />
-                                </div>
-                            </ManualComponentWrapper>
-                        </IllustrationWrapper>
-                        <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p><Em>Sounds:</Em> Choose from 3 kits for beats and 3 for subdivisions—independently.</p>
-                            <p>This allows full customization of the metronome’s sound.</p>
-                        </div>
-                    </ManualSection>
-
-                    <ManualSection title="Settings & Personalization">
-                        <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p>In the Settings menu, you can:</p>
-                             <ul className="list-disc pl-5 mt-2 space-y-1">
-                                <li>Log in with Google or Apple.</li>
-                                <li>Hide interface components (Quick Songs, Setlists, Tap Tempo, etc.) for a cleaner layout.</li>
-                                <li>Set custom minimum and maximum BPM values.</li>
-                                <li>Re-download the demo setlist.</li>
-                                <li>Access tutorials and this manual.</li>
-                                <li>Use the <Em>Danger Zone</Em> to reset the app to its default state.</li>
-                            </ul>
-                            <p>You can also enable tap-tempo, cloud sync, and account management features.</p>
-                        </div>
-                    </ManualSection>
-
-                    <ManualSection title="Account & Sync">
-                        <IllustrationWrapper scale={0.85}>
-                           <ManualComponentWrapper>
-                                <div className="w-[340px]">
-                                    <AccountIllustration />
-                                </div>
-                            </ManualComponentWrapper>
-                        </IllustrationWrapper>
-                        <div className="space-y-3 text-white/90 text-base leading-relaxed">
-                            <p>Create a free account to back up and sync your lists and configurations across all your devices.</p>
-                        </div>
-                    </ManualSection>
-
+                    </div>
                 </div>
             </div>
-        </main>
+        </div>
     );
 };
 

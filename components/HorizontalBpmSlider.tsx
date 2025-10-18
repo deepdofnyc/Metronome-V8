@@ -343,7 +343,7 @@ const BpmControl: React.FC<BpmControlProps> = ({
   ].join(" ");
 
   return (
-    <div className={`w-full flex flex-col gap-4 transition-opacity duration-300 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
+    <div className={`w-full flex flex-col transition-opacity duration-300 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
       <div 
         ref={sliderRef}
         onMouseDown={showSlider ? handleInteractionStart : undefined}

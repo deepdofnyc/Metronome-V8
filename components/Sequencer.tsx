@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { type Measure } from '../types';
 import { generateDefaultPattern } from '../utils';
@@ -337,6 +338,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
             <div className="flex justify-between items-center pb-4 mb-4 border-b border-white/10">
               <div className="flex items-center gap-2">
                 <button
+                  data-tour-id="sequencer-view-switch"
                   onClick={() => updateSetting('simpleView', simpleView === 'grid' ? 'rings' : 'grid')}
                   className="h-11 flex items-center gap-1 bg-black/20 p-1 rounded-full cursor-pointer transition-colors hover:bg-black/40"
                   aria-label={`Switch to ${simpleView === 'grid' ? 'ring' : 'grid'} view`}
@@ -349,6 +351,7 @@ const Sequencer: React.FC<SequencerProps> = (props) => {
 
               <div className="flex items-center gap-2">
                 <button
+                  data-tour-id="adv-sequencer-button"
                   onClick={() => onFlip(true)}
                   className="h-11 flex items-center gap-2 bg-black/20 pl-2 pr-3 rounded-full cursor-pointer transition-colors hover:bg-black/40 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   aria-controls="sequencer-back"
