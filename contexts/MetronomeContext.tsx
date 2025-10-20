@@ -140,10 +140,12 @@ export const MetronomeProvider: React.FC<{ children: ReactNode; value?: IMetrono
         if (isAdvSequencerActive) {
           return settings;
         }
+        // In simple view (Grid/Ring), always loop.
         const simpleSequence = settings.measureSequence.length > 0 ? [settings.measureSequence[0]] : [];
         return {
           ...settings,
           measureSequence: simpleSequence,
+          loop: true, // Force loop to be true for simple view.
         };
     }, [settings, isAdvSequencerActive]);
   

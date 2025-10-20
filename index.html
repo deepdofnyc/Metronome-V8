@@ -406,13 +406,12 @@
         inset: 0;
         background-color: rgba(0,0,0,0.7);
         z-index: 2000;
-        transition: opacity 0.3s ease-in-out;
+        transition: opacity 0.2s ease-in-out;
       }
       .walkthrough-highlight-box {
         position: fixed;
         border-radius: 28px;
         box-shadow: 0 0 0 9999px rgba(0,0,0,0.7);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         pointer-events: none;
       }
       .walkthrough-highlighted-element {
@@ -434,7 +433,7 @@
         backdrop-filter: blur(16px) saturate(180%);
         -webkit-backdrop-filter: blur(16px) saturate(180%);
         border: 1px solid var(--container-border);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         opacity: 0;
       }
       .walkthrough-bubble.visible {

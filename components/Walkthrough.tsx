@@ -13,6 +13,7 @@ interface Step {
     position: StepPosition;
     highlightPadding?: number;
     onEnter?: () => void;
+    transitionDelay?: number;
 }
 
 const Walkthrough: React.FC<WalkthroughProps> = ({ onFinish }) => {
@@ -107,6 +108,7 @@ const Walkthrough: React.FC<WalkthroughProps> = ({ onFinish }) => {
             position: 'top',
             highlightPadding: 8,
             onEnter: () => ensureSequencerFace('advanced'),
+            transitionDelay: 800, // Wait for flip animation
         },
         {
             targetId: 'quick-songs',
@@ -115,6 +117,7 @@ const Walkthrough: React.FC<WalkthroughProps> = ({ onFinish }) => {
             position: 'top',
             highlightPadding: 8,
             onEnter: () => ensureSequencerFace('simple'),
+            transitionDelay: 800, // Wait for flip animation
         },
         {
             targetId: 'setlists',
@@ -129,7 +132,8 @@ const Walkthrough: React.FC<WalkthroughProps> = ({ onFinish }) => {
                 if (setlistToggleButton && setlistContent?.classList.contains('max-h-0')) {
                     setlistToggleButton.click();
                 }
-            }
+            },
+            transitionDelay: 500, // Wait for setlist container animation
         },
         {
             targetId: 'mixer-and-sounds-section',
@@ -150,7 +154,8 @@ const Walkthrough: React.FC<WalkthroughProps> = ({ onFinish }) => {
                 if (!buttonsContainer) return;
                 const mixerButton = buttonsContainer.querySelectorAll('button')[0];
                 if (mixerButton.getAttribute('aria-pressed') === 'false') mixerButton.click();
-            }
+            },
+            transitionDelay: 500, // Wait for setlist container to close
         },
         {
             targetId: 'mixer-and-sounds-section',
@@ -310,7 +315,7 @@ const Walkthrough: React.FC<WalkthroughProps> = ({ onFinish }) => {
         
         transitionTimeoutRef.current = window.setTimeout(() => {
             setStepIndex(targetStepIndex);
-        }, 300);
+        }, 150);
     }, [isTransitioning, stepIndex, steps, handleFinish]);
     
     const handleNext = useCallback(() => changeStep('next'), [changeStep]);
@@ -379,12 +384,12 @@ const Walkthrough: React.FC<WalkthroughProps> = ({ onFinish }) => {
                 const fadeInTimeout = setTimeout(() => {
                     setStyles(s => ({ ...s, bubbleVisible: true }));
                     setIsTransitioning(false);
-                }, 400);
+                }, 250);
                 transitionTimeoutRef.current = fadeInTimeout;
-            }, targetElement ? 450 : 50);
+            }, targetElement ? 250 : 50);
 
             transitionTimeoutRef.current = styleUpdateTimeout;
-        }, 100);
+        }, step.transitionDelay || 50);
 
         const debouncedRecalculate = () => {
             const newPositions = updatePositionsForStep(stepIndex);
