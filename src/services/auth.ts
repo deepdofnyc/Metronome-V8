@@ -6,7 +6,7 @@
  * point of contact between the frontend and the Supabase auth backend.
  */
 import { supabase } from '../lib/supabase';
-import { type Credentials } from '../types';
+import { type Credentials } from '../types/types';
 import { type AuthError, type Provider } from '@supabase/supabase-js';
 
 /**

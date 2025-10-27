@@ -1,7 +1,7 @@
 
 
 import React from 'react';
-import { useAppSettings } from './hooks/hooks-supabase';
+import { useAppSettings } from './hooks/hooks';
 import { MetronomeProvider, useMetronome } from './contexts/MetronomeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import Knob from './components/Knob';

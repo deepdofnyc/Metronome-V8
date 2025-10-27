@@ -1,8 +1,8 @@
 import React, { useState, useMemo, type ReactNode } from 'react';
 import { MetronomeProvider, useMetronome } from '../contexts/MetronomeContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
-import { createDemoSetlist, generateDefaultPattern } from '../utils';
-import { type MetronomeSettings, type PlaylistItem, type Setlist, type Measure } from '../types';
+import { createDemoSetlist, generateDefaultPattern } from '../utils/utils';
+import { type MetronomeSettings, type PlaylistItem, type Setlist, type Measure } from '../types/types';
 
 // Import all components to be displayed
 import Knob from './Knob';
@@ -18,7 +18,7 @@ import FeedbackModal from './FeedbackModal';
 import ManualModal from './ManualModal';
 import AccountManager from './AccountManager';
 import AddToHomeScreenPrompt from './AddToHomeScreenPrompt';
-import { useAppSettings } from '../hooks';
+import { useAppSettings } from '../hooks/hooks';
 
 // --- Storybook Wrapper ---
 // Provides a mock context for all components so they can render without crashing.

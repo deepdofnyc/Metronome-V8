@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { type PlaylistItem } from '../types';
+import { type PlaylistItem } from '../types/types';
 import { useMetronome } from '../contexts/MetronomeContext';
 import { PlayerStopIcon, PlayerPlayIcon, SongNextIcon, SongPrevIcon } from './Icons';
 

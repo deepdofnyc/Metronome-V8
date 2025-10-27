@@ -1,10 +1,10 @@
 
 
 import React from 'react';
-import { type Sound } from '../types';
+import { type Sound } from '../types/types';
 import { playStepPreview } from '../services/audioPreviews';
 import { useMetronome } from '../contexts/MetronomeContext';
-import { SOUND_OPTIONS } from '../constants';
+import { SOUND_OPTIONS } from '../constants/constants';
 
 interface SoundSelectorProps {}
 

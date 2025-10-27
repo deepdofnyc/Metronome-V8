@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { type AppSettings } from '../hooks';
+import { type AppSettings } from '../hooks/hooks';
 import { ChevronLeftIcon } from './Icons';
-import { MIN_BPM, MAX_BPM } from '../constants';
+import { MIN_BPM, MAX_BPM } from '../constants/constants';
 import SettingsSlider from './SettingsSlider';
 import AccountManager from './AccountManager';
 

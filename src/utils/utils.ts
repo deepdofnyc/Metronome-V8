@@ -1,4 +1,4 @@
-import { type MetronomeSettings, type OldMetronomeSettings, type SubdivisionV1, type Measure, type Setlist, type PlaylistItem } from './types';
+import { type MetronomeSettings, type OldMetronomeSettings, type SubdivisionV1, type Measure, type Setlist, type PlaylistItem } from '../types/types';
 
 export const generateDefaultPattern = (beats: number, subdivisions: number): number[] => {
   const totalSteps = beats * subdivisions;
