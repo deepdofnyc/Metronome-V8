@@ -1,28 +1,28 @@
 
 
 import React from 'react';
-import { useAppSettings } from './hooks-supabase';
-import { MetronomeProvider, useMetronome } from './contexts/MetronomeContext';
-import { AuthProvider } from './contexts/AuthContext';
-import Knob from './components/Knob';
-import SetlistManager from './components/SetlistManager';
-import BpmControl from './components/HorizontalBpmSlider';
-import CircularRhythmControl from './components/RhythmSlider';
-import Sequencer from './components/Sequencer';
-import SoundSelector from './components/SoundSelector';
-import AddToHomeScreenPrompt from './components/AddToHomeScreenPrompt';
-import QuickSongBar from './components/QuickSongBar';
-import SettingsModal from './components/SettingsModal';
-import FeedbackModal from './components/FeedbackModal';
-import ManualModal from './components/ManualModal';
-import SetlistPlayer from './components/SetlistPlayer';
+import { useAppSettings } from './src/hooks/hooks-supabase';
+import { MetronomeProvider, useMetronome } from './src/contexts/MetronomeContext';
+import { AuthProvider } from './src/contexts/AuthContext';
+import Knob from './src/components/Knob';
+import SetlistManager from './src/components/SetlistManager';
+import BpmControl from './src/components/HorizontalBpmSlider';
+import CircularRhythmControl from './src/components/RhythmSlider';
+import Sequencer from './src/components/Sequencer';
+import SoundSelector from './src/components/SoundSelector';
+import AddToHomeScreenPrompt from './src/components/AddToHomeScreenPrompt';
+import QuickSongBar from './src/components/QuickSongBar';
+import SettingsModal from './src/components/SettingsModal';
+import FeedbackModal from './src/components/FeedbackModal';
+import ManualModal from './src/components/ManualModal';
+import SetlistPlayer from './src/components/SetlistPlayer';
 import { 
     MixerIcon, 
     SoundIcon, 
     PlayIcon,
     StopIcon
-} from './components/Icons';
-import Storybook from './components/Storybook';
+} from './src/components/Icons';
+import Storybook from './src/components/Storybook';
 
 
 /**
