@@ -3,7 +3,7 @@ import { type MetronomeSettings, type PlaylistItem, type Setlist, type Measure }
 import { useMetronomeEngine, useSetlist, useQuickSongs } from '../hooks/hooks';
 import { generateDefaultPattern, migrateSettingsIfNeeded, generateRandomPattern, createDemoSetlist } from '../utils/utils';
 import { AudioEngine } from '../services/audioEngine';
-import { SOUND_OPTIONS } from '@/constants/constants';
+import { SOUND_OPTIONS } from '../constants/constants';
 
 const getDefaultSettings = (): MetronomeSettings => {
     const now = Date.now();

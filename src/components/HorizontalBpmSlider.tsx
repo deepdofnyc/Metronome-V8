@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { MIN_BPM,MAX_BPM } from '@/constants/constants';
+import { MIN_BPM, MAX_BPM } from '../constants/constants';
 import { useMetronome } from '../contexts/MetronomeContext';
 // FIX: Removed unused 'PlayIcon' and non-existent 'PauseIcon' from imports.
 import { BpmMinusIcon, BpmPlusIcon } from './Icons';
