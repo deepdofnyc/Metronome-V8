@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react';
-import { type MetronomeSettings, type PlaylistItem, type Setlist, type Measure } from '../types';
-import { useMetronomeEngine, useSetlist, useQuickSongs } from '../hooks';
-import { generateDefaultPattern, migrateSettingsIfNeeded, generateRandomPattern, createDemoSetlist } from '../utils';
+import { type MetronomeSettings, type PlaylistItem, type Setlist, type Measure } from '../types/types';
+import { useMetronomeEngine, useSetlist, useQuickSongs } from '../hooks/hooks';
+import { generateDefaultPattern, migrateSettingsIfNeeded, generateRandomPattern, createDemoSetlist } from '../utils/utils';
 import { AudioEngine } from '../services/audioEngine';
-import { SOUND_OPTIONS } from '../constants';
+import { SOUND_OPTIONS } from '@/constants/constants';
 
 const getDefaultSettings = (): MetronomeSettings => {
     const now = Date.now();

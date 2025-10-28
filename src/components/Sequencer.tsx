@@ -2,8 +2,8 @@
 
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { type Measure } from '../types';
-import { generateDefaultPattern } from '../utils';
+import { type Measure } from '../types/types';
+import { generateDefaultPattern } from '../utils/utils';
 import RingSequencer from './RingSequencer';
 import StepGrid from './StepGrid';
 import { useMetronome } from '../contexts/MetronomeContext';

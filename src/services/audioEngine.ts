@@ -1,5 +1,5 @@
 
-import { type Measure, type MetronomeSettings } from '../types';
+import { type Measure, type MetronomeSettings } from '../types/types';
 
 /**
  * @class AudioEngine

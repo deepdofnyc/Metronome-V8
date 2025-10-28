@@ -1,4 +1,4 @@
-import { type Sound } from './types';
+import { type Sound } from '../types/types';
 
 export const MIN_BPM = 20;
 export const MAX_BPM = 400;

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { type PlaylistItem, type MetronomeSettings } from '../types';
+import { type PlaylistItem, type MetronomeSettings } from '../types/types';
 import { useMetronome } from '../contexts/MetronomeContext';
 import { PlusIcon, DiceIcon, ResetIcon } from './Icons';
 

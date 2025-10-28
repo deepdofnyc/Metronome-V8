@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { type PlaylistItem, type Setlist, type MetronomeSettings } from '../types';
+import { type PlaylistItem, type Setlist, type MetronomeSettings } from '../types/types';
 import { useMetronome } from '../contexts/MetronomeContext';
 import { 
     DragHandleIcon,

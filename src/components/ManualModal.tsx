@@ -16,8 +16,8 @@ import AccountManager from './AccountManager';
 import SoundSelector from './SoundSelector';
 
 // Import utilities to create mock data
-import { createDemoSetlist, generateDefaultPattern } from '../utils';
-import { type MetronomeSettings, type PlaylistItem, type Measure } from '../types';
+import { createDemoSetlist, generateDefaultPattern } from '../utils/utils';
+import { type MetronomeSettings, type PlaylistItem, type Measure } from '../types/types';
 
 
 // A self-contained mock context provider to render components in isolation.
