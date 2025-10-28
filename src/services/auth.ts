@@ -142,5 +142,11 @@ export const listFactors = async (): Promise<{ factors: MfaFactor[] | null; erro
         return { factors: null, error };
     }
     // The 'data' object has a 'totp' property which is an array of factors.
-    return { factors: data?.totp ?? [], error: null };
+    const factors = (data?.totp ?? []).map((f: any) => ({
+        id: f.id,
+        friendlyName: f.friendly_name ?? '',
+        factorType: (f.factor_type ?? 'totp') as 'totp',
+        status: f.status as 'verified' | 'unverified',
+    }));
+    return { factors, error: null };
 };

@@ -197,7 +197,18 @@ export const useQuickSongs = () => {
  * @returns {{settings: any, updateSetting: (key: string, value: any) => void, factoryReset: () => void, isLoading: boolean}}
  */
 export const useAppSettings = () => {
-    const [settings, setSettings] = useState<any>(null);
+
+        // Define defaults
+    const DEFAULT_SETTINGS = {
+        showBpmControl: true,
+        showTapButton: true,
+        showQuickSongs: true,
+        showSetlists: true,
+        showSequencer: true,
+        minBpm: 40,
+        maxBpm: 340
+    };
+ const [settings, setSettings] = useState<any>(DEFAULT_SETTINGS);
     const [isLoading, setIsLoading] = useState(true);
 
     // Load app settings from Supabase or localStorage fallback
