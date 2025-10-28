@@ -4,9 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AudioEngine } from '@/services/audioEngine';
 import { type MetronomeSettings, type PlaylistItem, type Setlist } from '../types/types';
 import { migrateSettingsIfNeeded, createDemoSetlist } from '../utils/utils';
-import { AudioEngine } from '../services/audioEngine';
-import { type MetronomeSettings, type PlaylistItem, type Setlist } from '../types/types';
-import { migrateSettingsIfNeeded, createDemoSetlist } from '../utils/utils';
+
 
 /**
  * @hook useMetronomeEngine
